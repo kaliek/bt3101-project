@@ -54,36 +54,63 @@ Ideally, a url of the faculty list should be able to locate based on the keyword
 __Geography__:
 
 University College London
+
 University of Colorado – Boulder
+
 University of Manchester
+
 University of Toronto (St George)
+
 Queen Mary London
+
 University of Cambridge
+
 University of British Columbia
+
 University of Oxford
 
 __Biomedical Engineer__:
+
 Columbia University
+
 Northwestern University
+
 Rice University
+
 University of California--Los Angeles (Samueli)
+
 University of Michigan
+
 University of Toronto
+
 Johns Hopkins University
+
 Georgia Institute of Technology
+
 University of California-San Diego
+
 Duke University
+
 Massachusetts Institute of Technology
+
 Stanford University
 
 __Biochemistry__:
+
 University of Chicago
+
 The University of Hong Kong
+
 New York University (NYU)
+
 Monash University
+
 University of California, San Francisco
+
 University of College London
+
 University of Illinois at Urbana-Champaign
+
 McGill University
 
 
