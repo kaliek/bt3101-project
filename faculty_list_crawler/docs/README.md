@@ -53,21 +53,21 @@ Ideally, a url of the faculty list should be able to locate based on the keyword
 
 __Geography__:
 
-University College London
+University College London: http://www.geog.ucl.ac.uk/people/academic-staff
 
-University of Colorado – Boulder
+University of Colorado – Boulder: http://www.colorado.edu/geography/ppl4/faculty
 
-University of Manchester
+University of Manchester: http://www.seed.manchester.ac.uk/geography/about/people/
 
-University of Toronto (St George)
+University of Toronto (St George): http://geography.utoronto.ca/people/faculty/full-time-faculty/
 
-Queen Mary London
+Queen Mary London: http://www.geog.qmul.ac.uk/staff/academicstaff/
 
-University of Cambridge
+University of Cambridge: https://www.geog.cam.ac.uk/people/
 
-University of British Columbia
+University of British Columbia: http://www.geog.ubc.ca/people/
 
-University of Oxford
+University of Oxford: http://www.geog.ox.ac.uk/staff/
 
 __Biomedical Engineer__:
 
