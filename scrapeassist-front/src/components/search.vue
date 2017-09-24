@@ -11,16 +11,22 @@
         </h2>
         <form class="ui large form">
           <div class="field">
-            <div class="ui left icon input">
-              <i class="university icon"></i>
-              <input type="text" name="email" placeholder="University" v-model="university">
-            </div>
+            <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
+              <option value=""><i class="university icon"></i>University</option>
+              <option v-for="(u,idx) in universities">{{u.name}}</option>
+            </select>
+            <button class="circular ui icon button">
+              <i class="icon plus"></i>
+            </button>
           </div>
           <div class="field">
-            <div class="ui left icon input">
-              <i class="building icon"></i>
-              <input type="text" name="password" placeholder="Faculty" v-model="faculty">
-            </div>
+            <select name="faculty" class="ui fluid dropdown" id="faculty-select">
+              <option value=""><i class="building icon"></i>Faculty</option>
+              <option v-for="(f,idx) in faculties">{{f.name}}</option>
+            </select>
+            <button class="circular ui icon button">
+              <i class="icon plus"></i>
+            </button>
           </div>
           <div class="ui buttons">
             <button class="ui black button" v-on:click="searchDatabase">Search the Database</button>
@@ -35,11 +41,14 @@
 </template>
 
 <script>
+import $ from 'jquery'
 export default {
+  mounted: function () {
+    $('#university-select').dropdown()
+    $('#faculty-select').dropdown()
+  },
   data: function () {
     return {
-      university: '',
-      faculty: ''
     }
   },
   methods: {
@@ -48,6 +57,14 @@ export default {
     },
     requestCrawl: function () {
       this.$router.push('crawlrequest')
+    }
+  },
+  computed: {
+    universities: function () {
+      return this.$store.state.universities
+    },
+    faculties: function () {
+      return this.$store.state.faculties
     }
   }
 }
@@ -63,5 +80,15 @@ export default {
 
 .large.form {
   width: 450px;
+}
+
+.field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.circular.button {
+  margin-left: 5px;
 }
 </style>

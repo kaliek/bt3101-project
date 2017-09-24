@@ -9,6 +9,9 @@ professors.deny({
 })
 
 const professorSchema = new SimpleSchema({
+  universityId: {
+    type: String
+  },
   facultyId: {
     type: String
   },
@@ -51,27 +54,40 @@ const professorSchema = new SimpleSchema({
 professors.attachSchema(professorSchema)
 
 if (!professors.find({}).count()) {
+  var Fiber = require('fibers')
   var fileReader = require('readline').createInterface({
     input: require('fs').createReadStream('assets/app/testdata.json')
   })
-
-  var Fiber = require('fibers')
   fileReader.on('line', function (line) {
     var data = JSON.parse(line)
     Fiber(function () {
       console.log('Importing data for Prof. ' + data.name)
-      var uid = universities.findOne({name: data.university})
-      if (!uid) {
-        var uid = universities.insert({name: data.university})
+      var uid = universities.upsert({name: data.university}, {$set: {name: data.university, facultyIds: []}})
+      if (!uid.insertedId) {
+        uid = universities.findOne({name: data.university})._id
+      } else {
+        uid = uid.insertedId
       }
-      var fid = faculties.findOne({name: data.faculty, universityId: uid})
-      if (!fid) {
-        var fid = faculties.insert({name: data.faculty, universityId: uid})
+      var fid = faculties.upsert({name: data.faculty}, {$set: {name: data.faculty}})
+      if (!fid.insertedId) {
+        fid = faculties.findOne({name: data.faculty})._id
+      } else {
+        fid = fid.insertedId
       }
       data['facultyId'] = fid
+      data['universityId'] = uid
       delete data.university
       delete data.faculty
       professors.insert(data)
     }).run()
   })
+  setTimeout(function () {
+    Fiber(function () {
+      var p = professors.find({}).fetch()
+      for (var i in p) {
+        console.log(p[i].facultyId)
+        universities.update({_id: p[i].universityId}, {$addToSet: {facultyIds: p[i].facultyId}})
+      }
+    }).run()
+  }, 5000)
 }

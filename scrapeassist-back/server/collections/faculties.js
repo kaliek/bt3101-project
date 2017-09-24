@@ -9,12 +9,15 @@ faculties.deny({
 })
 
 const facultySchema = new SimpleSchema({
-  universityId: {
-    type: String
-  },
   name: {
     type: String
   }
 })
 
 faculties.attachSchema(facultySchema)
+
+Meteor.publish({
+  allFaculties: function () {
+    return faculties.find({})
+  }
+})

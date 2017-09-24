@@ -108,13 +108,16 @@ const app = new Vue({
     this.$store.state.conn.connect()
     this.$store.state.conn.on('connected', function () {
       console.log('Connected to Server!')
-    })
+      this.$store.state.conn.loginWithPassword({email: 'admin@admin.com', password: 'admin'})
+    }.bind(this))
     this.$store.state.conn.on('disconnected', function () {
       console.log('Disconnected!')
     })
     this.$store.state.conn.on('loggedIn', function () {
       console.log('Logged In!')
-    })
+      this.$store.state.conn.subscribe('allUniversities')
+      this.$store.state.conn.subscribe('allFaculties')
+    }.bind(this))
     this.$store.state.conn.on('loggedOut', function () {
       this.$router.push('/')
       console.log('Logged Out!')
