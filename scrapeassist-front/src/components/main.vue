@@ -22,6 +22,7 @@
       <iframe src="http://www.comp.nus.edu.sg/about/depts/cs/faculty/"></iframe>
       <iframe src="https://coe.uga.edu/directory"></iframe>
       <iframe src="http://mitsloan.mit.edu/faculty-and-research/faculty-directory/"></iframe>
+      <iframe src="http://mitsloan.mit.edu/faculty-and-research/faculty-directory/"></iframe>
     </div>
   </div>
 </template>
