@@ -1,12 +1,12 @@
 import SimpleSchema from 'simpl-schema';
 
-crawlrequests = new Meteor.Collection('crawlrequests')
+crawlrequests = new Meteor.Collection('crawlrequests');
 
 crawlrequests.deny({
   insert: () => true,
   update: () => true,
   remove: () => true
-})
+});
 
 const crawlrequestSchema = new SimpleSchema({
   timeStamp: {
@@ -39,4 +39,6 @@ const crawlrequestSchema = new SimpleSchema({
   'professorIds.$': {
     type: String
   }
-})
+});
+
+crawlrequests.attachSchema(crawlrequestSchema);

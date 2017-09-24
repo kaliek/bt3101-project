@@ -16,3 +16,5 @@ const facultySchema = new SimpleSchema({
     type: String
   }
 })
+
+faculties.attachSchema(facultySchema)

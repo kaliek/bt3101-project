@@ -12,7 +12,7 @@ const professorSchema = new SimpleSchema({
   facultyId: {
     type: String
   },
-  name : {
+  name: {
     type: String
   },
   rank: {
@@ -35,7 +35,7 @@ const professorSchema = new SimpleSchema({
     type: SimpleSchema.Integer,
     optional: true
   },
-  currentInstitution: {
+  promotionInstitution: {
     type: String,
     optional: true
   },
@@ -47,3 +47,31 @@ const professorSchema = new SimpleSchema({
     type: String
   }
 })
+
+professors.attachSchema(professorSchema)
+
+if (!professors.find({}).count()) {
+  var fileReader = require('readline').createInterface({
+    input: require('fs').createReadStream('assets/app/testdata.json')
+  })
+
+  var Fiber = require('fibers')
+  fileReader.on('line', function (line) {
+    var data = JSON.parse(line)
+    Fiber(function () {
+      console.log('Importing data for Prof. ' + data.name)
+      var uid = universities.findOne({name: data.university})
+      if (!uid) {
+        var uid = universities.insert({name: data.university})
+      }
+      var fid = faculties.findOne({name: data.faculty, universityId: uid})
+      if (!fid) {
+        var fid = faculties.insert({name: data.faculty, universityId: uid})
+      }
+      data['facultyId'] = fid
+      delete data.university
+      delete data.faculty
+      professors.insert(data)
+    }).run()
+  })
+}

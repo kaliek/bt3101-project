@@ -13,3 +13,5 @@ const universitySchema = new SimpleSchema({
     type: String
   }
 })
+
+universities.attachSchema(universitySchema)
