@@ -1,5 +1,83 @@
 <template>
   <div id="database-page">
+    <div id="mouseover-zone">
+      <div class="ui vertical menu" id="filter-menu">
+        <div class="item">
+          <h5><i class="random icon"></i>SORT</h5>
+          <div class="menu">
+            <a class="item" @click="sortList('name')" :class="{active: k==='name'}">Name</a>
+            <a class="item" @click="sortList('university')" :class="{active: k==='university'}">Current Institution</a>
+            <a class="item" @click="sortList('rank')" :class="{active: k==='rank'}">Academic Rank</a>
+            <a class="item" @click="sortList('phdYear')" :class="{active: k==='phdYear'}">Year of PhD</a>
+            <a class="item" @click="sortList('phdInstitution')" :class="{active: k==='phdInstitution'}">PhD Instution</a>
+            <a class="item" @click="sortList('promotionYear')" :class="{active: k==='promotionYear'}">Year of Promotion</a>
+            <a class="item" @click="sortList('promotionInstitution')" :class="{active: k==='promotionInstitution'}">Promotion Institution</a>
+          </div>
+        </div>
+        <div class="item" id="filters-menu">
+          <h5><i class="filter icon"></i>FILTER</h5>
+          <div class="ui icon input transparent">
+            <input placeholder="Min PhD Year..." type="text" v-model="minPhdYear">
+          </div>
+          <div class="ui icon input transparent">
+            <input placeholder="Min Promotion Year..." type="text" v-model="minPromotionYear">
+          </div>
+        </div>
+        <div class="ui dropdown item">
+          Academic Rank
+          <i class="dropdown icon"></i>
+          <div class="menu" id="academic-popup">
+            <a class="item">Edit Profile</a>
+            <a class="item">Choose Language</a>
+            <a class="item">Account Settings</a>
+          </div>
+        </div>
+        <div class="ui dropdown item">
+          PhD Institution
+          <i class="dropdown icon"></i>
+          <div class="menu" id="academic-popup">
+            <a class="item">Edit Profile</a>
+            <a class="item">Choose Language</a>
+            <a class="item">Account Settings</a>
+          </div>
+        </div>
+        <div class="ui dropdown item">
+          Promotion Instution
+          <i class="dropdown icon"></i>
+          <div class="menu" id="academic-popup">
+            <a class="item">Edit Profile</a>
+            <a class="item">Choose Language</a>
+            <a class="item">Account Settings</a>
+          </div>
+        </div>
+        <div class="item">
+          <div id="view-menu">
+            <div class="ui labeled icon menu">
+              <a class="item">
+                <i class="list layout icon"></i>
+                <span class="view-label">List View</span>
+              </a>
+              <a class="item">
+                <i class="block layout icon"></i>
+                <span class="view-label">Grid View</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="item">
+          <button class="ui button green" style="width: 100%;">
+            <i class="download icon"></i>
+            Download CSV
+          </button>
+        </div>
+        <div class="item">
+          <button class="ui button">
+            <i class="share icon"></i>
+            Submit Crawl Request
+          </button>
+        </div>
+      </div>
+    </div>
     <div id="search-bar">
       <div class="university field">
         <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
@@ -28,7 +106,7 @@
         </div>
       </div>
       <div class="list-outer" id="results-list">
-        <div class="ui relaxed divided list">
+        <div name="flip-list" class="ui relaxed divided list" tag="div" id="results-list-inner">
           <div class="ui item prof" v-for="i in professors">
             <div class="ui grid">
               <div class="two wide column">{{i.name}}</div>
@@ -55,16 +133,28 @@ export default {
     this.uSelect.dropdown('set exactly', this.$store.state.uIds)
     this.fSelect = $(this.$el).find('#faculty-select').dropdown()
     this.fSelect.dropdown('set value', this.$store.state.fId)
+    $(this.$el).find('.dropdown').dropdown()
+    $(this.$el).find('#mouseover-zone').on('mouseover', function (e) {
+      $('#filter-menu').addClass('visible')
+    }).on('mouseout', function (e) {
+      $('#filter-menu').removeClass('visible')
+    })
   },
   data: function () {
     return {
       uSelect: null,
-      fSelect: null
+      fSelect: null,
+      k: 'name',
+      minPhdYear: '',
+      minPromotionYear: ''
     }
   },
   methods: {
     crawlRequest: function () {
       this.$router.push('crawlrequest')
+    },
+    sortList: function (sortKey) {
+      this.k = sortKey
     }
   },
   computed: {
@@ -72,7 +162,44 @@ export default {
       return this.$store.state.dbSearchResults
     },
     professors: function () {
-      return this.$store.state.professorsList
+      var cmpFn = function (key) {
+        return function (a, b) {
+          if (a[key] > b[key]) {
+            return 1
+          } else if (a[key] < b[key]) {
+            return -1
+          }
+          return 0
+        }
+      }
+      if (this.k === 'university') {
+        cmpFn = function (key) {
+          return function (a, b) {
+            if (this.universities[a.universityId].name > this.universities[b.universityId].name) {
+              return 1
+            } else if (this.universities[a.universityId].name < this.universities[b.universityId].name) {
+              return -1
+            }
+            return 0
+          }.bind(this)
+        }.bind(this)
+      }
+      var filterFn = function (e) {
+        var phdYearFilter = true
+        if (!isNaN(this.minPhdYear) && ('phdYear' in e && e.phdYear < parseInt(this.minPhdYear))) {
+          phdYearFilter = false
+        } else if (!isNaN(this.minPhdYear) && !('phdYear' in e)) {
+          phdYearFilter = false
+        }
+        var promotionYearFilter = true
+        if (!isNaN(this.minPromotionYear) && ('promotionYear' in e && e.promotionYear < parseInt(this.minPromotionYear))) {
+          promotionYearFilter = false
+        } else if (!isNaN(this.minPromotionYear) && !('promotionYear' in e)) {
+          promotionYearFilter = false
+        }
+        return (phdYearFilter || this.minPhdYear === '') && (promotionYearFilter || this.minPromotionYear === '')
+      }.bind(this)
+      return this.$store.state.professorsList.sort(cmpFn(this.k)).filter(filterFn)
     },
     universities: function () {
       return this.$store.state.universities
@@ -83,8 +210,9 @@ export default {
   },
   watch: {
     'this.$store.state.uIds': function (v) {
-      console.log('uIds changed')
-      this.uSelect.dropdown('set exactly', v)
+      if (v) {
+        this.uSelect.dropdown('set exactly', v)
+      }
     }
   }
 }
@@ -99,8 +227,55 @@ export default {
   position: relative;
 }
 
-#menu {
-  margin: 0px;
+#mouseover-zone {
+  height: 700px;
+  width: 250px;
+  position: absolute;
+  top: 150px;
+  left: 0;
+  z-index: 4;
+}
+
+#filter-menu {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  z-index: 4;
+  text-align: left;
+  transform: translate3d(-255px, 0, 0);
+  transition: transform .3s ease;
+  opacity: 1;
+}
+
+#filter-menu.visible {
+  transform: translate3d(0px, 0, 0);
+}
+
+#filters-menu > .ui.input {
+  margin: 5px 0px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#view-menu > .menu {
+  border: none;
+  box-shadow: none;
+}
+
+#view-menu .item {
+  display: flex;
+  flex-direction: column;
+  height: 56px;
+  width: 88px;
+  color: black;
+  padding: 5px;
+}
+
+#view-menu .icon {
+  font-size: large;
+}
+
+#view-menu .view-label {
+  font-size: small;
 }
 
 #search-bar {
@@ -108,7 +283,7 @@ export default {
   border-bottom: 2px solid rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-around;
   flex: 0 0 auto;
 }
 
@@ -158,5 +333,9 @@ export default {
 #results-list {
   flex: 0 1 auto;
   overflow: auto;
+}
+
+.flip-list-move {
+  transition: transform 1s;
 }
 </style>
