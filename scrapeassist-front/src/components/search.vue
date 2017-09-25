@@ -9,11 +9,11 @@
             <!-- <div class="sub header">Manage your account settings and set e-mail preferences.</div> -->
           </div>
         </h2>
-        <form class="ui large form">
+        <div class="ui large form">
           <div class="field">
             <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
               <option value=""><i class="university icon"></i>University</option>
-              <option v-for="(u,idx) in universities">{{u.name}}</option>
+              <option v-for="(u,idx) in universities" v-bind:value="idx">{{u.name}}</option>
             </select>
             <button class="circular ui icon button">
               <i class="icon plus"></i>
@@ -22,19 +22,19 @@
           <div class="field">
             <select name="faculty" class="ui fluid dropdown" id="faculty-select">
               <option value=""><i class="building icon"></i>Faculty</option>
-              <option v-for="(f,idx) in faculties">{{f.name}}</option>
+              <option v-for="(f,idx) in faculties" v-bind:value="idx">{{f.name}}</option>
             </select>
             <button class="circular ui icon button">
               <i class="icon plus"></i>
             </button>
           </div>
           <div class="ui buttons">
-            <button class="ui black button" v-on:click="searchDatabase">Search the Database</button>
+            <button class="ui black button" v-on:click="search">Search the Database</button>
             <div class="or"></div>
             <button class="ui positive button" v-on:click="requestCrawl">Request a Crawl</button>
           </div>
           <div class="ui error message"></div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -44,16 +44,22 @@
 import $ from 'jquery'
 export default {
   mounted: function () {
-    $('#university-select').dropdown()
-    $('#faculty-select').dropdown()
+    this.uSelect = $(this.$el).find('#university-select').dropdown()
+    this.fSelect = $(this.$el).find('#faculty-select').dropdown()
   },
   data: function () {
     return {
+      uSelect: null,
+      fSelect: null
     }
   },
   methods: {
-    searchDatabase: function () {
-      this.$router.push('database')
+    search: function () {
+      this.$store.dispatch('searchProfessors', {
+        uIds: this.uSelect.dropdown('get value'),
+        fId: this.fSelect.dropdown('get value'),
+        router: this.$router
+      })
     },
     requestCrawl: function () {
       this.$router.push('crawlrequest')

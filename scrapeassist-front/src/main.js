@@ -25,7 +25,10 @@ const store = new Vuex.Store({
       title: '',
       msg: '',
       icon: ''
-    }
+    },
+    uIds: [],
+    fId: '',
+    dbSearchResults: []
   },
   mutations: {
     added: function (s, o) {
@@ -70,6 +73,14 @@ const store = new Vuex.Store({
     showMessageModal: function (s, payload) {
       s.msgModalProps = payload
       $('#message-modal').modal('show')
+    },
+    setDbSearchResults: function (s, p) {
+      s.dbSearchResults = p
+    },
+    setSelectedIds: function (s, {uIds, fId}) {
+      console.log('setting stuff!')
+      s.uIds = uIds
+      s.fId = fId
     }
   },
   actions: {
@@ -92,6 +103,16 @@ const store = new Vuex.Store({
     logout: function ({ commit, state }, router) {
       state.conn.logout()
       router.push('/')
+    },
+    searchProfessors: function ({ commit, state }, {uIds, fId, router}) {
+      commit('setSelectedIds', {uIds: uIds, fId: fId})
+      state.conn.call('searchProfessors', uIds, fId).then(function (r) {
+        console.log(r)
+        commit('setDbSearchResults', r)
+        router.push('database')
+      }).catch(function (e) {
+        commit('showMessageModal', {msg: e.reason, title: e.error, icon: 'fa-exclamation-triangle'})
+      })
     }
   },
   getters: {
@@ -117,6 +138,7 @@ const app = new Vue({
       console.log('Logged In!')
       this.$store.state.conn.subscribe('allUniversities')
       this.$store.state.conn.subscribe('allFaculties')
+      this.$store.state.conn.subscribe('allProfessors')
     }.bind(this))
     this.$store.state.conn.on('loggedOut', function () {
       this.$router.push('/')

@@ -91,3 +91,16 @@ if (!professors.find({}).count()) {
     }).run()
   }, 5000)
 }
+
+Meteor.methods({
+  searchProfessors: function (uIds, fId) {
+    console.log('called')
+    return professors.find({universityId: {$in: uIds}, facultyId: fId}).fetch()
+  }
+})
+
+Meteor.publish({
+  allProfessors: function () {
+    return professors.find({})
+  }
+})

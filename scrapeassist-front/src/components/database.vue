@@ -1,130 +1,90 @@
 <template>
   <div id="database-page">
-    <div class="ui secondary pointing menu" id="menu">
-      <a class="active item">
-        University Name
-      </a>
-      <a class="item">
-        Faculty Name
-      </a>
-      <div class="right menu">
-        <div class="item">
-          <div class="ui icon input">
-            <input placeholder="Search by name..." type="text">
-            <i class="search link icon"></i>
-          </div>
-        </div>
-        <a class="browse item active" style="">
-          Filters
-          <i class="dropdown icon"></i>
-        </a>
+    <div id="search-bar">
+      <div class="university field">
+        <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
+          <option value=""><i class="university icon"></i>University</option>
+          <option v-for="(u,idx) in universities" v-bind:value="idx">{{u.name}}</option>
+        </select>
+      </div>
+      <div class="faculty field">
+        <select name="faculty" class="ui fluid dropdown" id="faculty-select">
+          <option value=""><i class="building icon"></i>Faculty</option>
+          <option v-for="(f,idx) in faculties" v-bind:value="idx">{{f.name}}</option>
+        </select>
       </div>
     </div>
-    <!-- <div class="ui fluid popup bottom left transition visible animating scale out">
-      <div class="ui four column relaxed equal height divided grid">
-        <div class="column">
-          <h4 class="ui header">Fabrics</h4>
-          <div class="ui link list">
-            <a class="item">Cashmere</a>
-            <a class="item">Linen</a>
-            <a class="item">Cotton</a>
-            <a class="item">Viscose</a>
-          </div>
+    <div class="ui segment" id="segment">
+      <div class="ui item small header">
+        <div class="ui grid">
+          <div class="two wide column">Name</div>
+          <div class="two wide column">Current Institution</div>
+          <div class="one wide column">Academic Rank</div>
+          <div class="one wide column">Year of PhD</div>
+          <div class="two wide column">PhD Institution</div>
+          <div class="one wide column">Year of Promotion</div>
+          <div class="two wide column">Promotion Institution</div>
+          <div class="five wide column">Research Interests</div>
         </div>
-        <div class="column">
-          <h4 class="ui header">Size</h4>
-          <div class="ui link list">
-            <a class="item">Small</a>
-            <a class="item">Medium</a>
-            <a class="item">Large</a>
-            <a class="item">Plus Sizes</a>
-          </div>
-        </div>
-        <div class="column">
-          <h4 class="ui header">Colored</h4>
-          <div class="ui link list">
-            <a class="item">Neutrals</a>
-            <a class="item">Brights</a>
-            <a class="item">Pastels</a>
-          </div>
-        </div>
-        <div class="column">
-          <h4 class="ui header">Types</h4>
-          <div class="ui link list">
-            <a class="item">Knitwear</a>
-            <a class="item">Outerwear</a>
-            <a class="item">Pants</a>
-            <a class="item">Shoes</a>
+      </div>
+      <div class="list-outer" id="results-list">
+        <div class="ui relaxed divided list">
+          <div class="ui item prof" v-for="i in professors">
+            <div class="ui grid">
+              <div class="two wide column">{{i.name}}</div>
+              <div class="two wide column">{{universities[i.universityId].name}}</div>
+              <div class="one wide column">{{i.rank}}</div>
+              <div class="one wide column">{{i.phdYear}}</div>
+              <div class="two wide column">{{i.phdInstitution}}</div>
+              <div class="one wide column">{{i.promotionYear}}</div>
+              <div class="two wide column">{{i.promotionInstitution}}</div>
+              <div class="five wide column">{{i.researchInterests}}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div> -->
-    <div class="ui segment" id="segment">
-      <table class="ui compact celled definition table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>University</th>
-            <th>Current Position</th>
-            <th>Year of Promotion</th>
-            <th>Title Promoted</th>
-            <th>Institute of Promotion</th>
-            <th>Year of PhD</th>
-            <th>Institute of PhD</th>
-            <th>Relevant Research Area</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="i in 20">
-            <td class="collapsing">
-              <div class="ui fitted slider checkbox">
-                <input type="checkbox"> <label></label>
-              </div>
-            </td>
-            <td>Andrew Barry</td>
-            <td>University College London</td>
-            <td>Professor</td>
-            <td>2017</td>
-            <td>Professor</td>
-            <td>University College London</td>
-            <td>1988</td>
-            <td>University of Sussex</td>
-            <td>Importance of materials and technologies in political and economic life</td>
-          </tr>
-        </tbody>
-        <tfoot class="full-width">
-          <tr>
-            <th></th>
-            <th colspan="9">
-              <div class="ui right floated small labeled icon button green">
-                <i class="download icon"></i> Download as CSV
-              </div>
-              <div class="ui right floated small labeled icon button" v-on:click="crawlRequest">
-                <i class="share icon"></i> Create a Crawl Request
-              </div>
-              <!-- <div class="ui small button">
-                Approve
-              </div>
-              <div class="ui small  disabled button">
-                Approve All
-              </div> -->
-            </th>
-          </tr>
-        </tfoot>
-      </table>
     </div>
   </div>
 </template>
 
 <script>
+import $ from 'jquery'
 export default {
+  mounted: function () {
+    this.uSelect = $(this.$el).find('#university-select').dropdown()
+    this.uSelect.dropdown('set exactly', this.$store.state.uIds)
+    this.fSelect = $(this.$el).find('#faculty-select').dropdown()
+    this.fSelect.dropdown('set value', this.$store.state.fId)
+  },
   data: function () {
-    return {}
+    return {
+      uSelect: null,
+      fSelect: null
+    }
   },
   methods: {
     crawlRequest: function () {
       this.$router.push('crawlrequest')
+    }
+  },
+  computed: {
+    results: function () {
+      return this.$store.state.dbSearchResults
+    },
+    professors: function () {
+      return this.$store.state.professorsList
+    },
+    universities: function () {
+      return this.$store.state.universities
+    },
+    faculties: function () {
+      return this.$store.state.faculties
+    }
+  },
+  watch: {
+    'this.$store.state.uIds': function (v) {
+      console.log('uIds changed')
+      this.uSelect.dropdown('set exactly', v)
     }
   }
 }
@@ -136,15 +96,67 @@ export default {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  position: relative;
 }
 
 #menu {
   margin: 0px;
 }
 
+#search-bar {
+  padding: 10px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex: 0 0 auto;
+}
+
 #segment {
-  flex: 1 0 auto;
+  flex: 1 1 auto;
   margin: 0px;
   border: none;
+  position: relative;
+  margin-top: 2px;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+
+.field.university {
+  width: calc(75% - 10px);
+}
+
+.field.faculty {
+  width: calc(25% - 10px);
+}
+
+.column {
+  padding: 5px !important;
+}
+
+.ui.grid {
+  position: relative;
+  width: 100%;
+  margin: 0px;
+}
+
+.ui.item.header {
+  width: 100%;
+  flex: 0 0 auto;
+  border-bottom: 2px solid rgba(34, 36, 38, 0.15);
+  margin-bottom: 0px;
+}
+
+.ui.item.prof {
+  margin: 0px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+#results-list {
+  flex: 0 1 auto;
+  overflow: auto;
 }
 </style>
