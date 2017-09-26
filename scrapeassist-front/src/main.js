@@ -28,7 +28,9 @@ const store = new Vuex.Store({
     },
     uIds: [],
     fId: '',
-    dbSearchResults: []
+    dbSearchResults: [],
+    cruIds: [],
+    crfId: ''
   },
   mutations: {
     added: function (s, o) {
@@ -80,6 +82,11 @@ const store = new Vuex.Store({
     setSelectedIds: function (s, {uIds, fId}) {
       s.uIds = uIds
       s.fId = fId
+    },
+    setCrawlRequest: function (s, {uIds, fId, router}) {
+      s.cruIds = uIds
+      s.crfId = fId
+      router.push('crawlrequest')
     }
   },
   actions: {
@@ -137,6 +144,7 @@ const app = new Vue({
       this.$store.state.conn.subscribe('allUniversities')
       this.$store.state.conn.subscribe('allFaculties')
       this.$store.state.conn.subscribe('allProfessors')
+      this.$store.state.conn.subscribe('allCrawlRequests')
     }.bind(this))
     this.$store.state.conn.on('loggedOut', function () {
       this.$router.push('/')

@@ -18,6 +18,29 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-for="i in crawlrequests">
+          <td>
+            <h4 class="ui image header">
+              <div class="content">
+                {{universities[i.universityId].name}}
+                <div class="sub header">Faculty of Computing</div>
+            </div>
+          </h4></td>
+          <td>
+            23/9/2017 1:13pm
+          </td>
+          <td>
+          </td>
+          <td>
+            {{0 in i.status ? 'Pending' : 'Received'}}
+          </td>
+          <td>
+            <!-- <button class="ui right labeled icon button">
+              <i class="right arrow icon"></i>
+              View Results
+            </button> -->
+          </td>
+        </tr>
         <tr>
           <td>
             <h4 class="ui image header">
@@ -59,7 +82,7 @@
             Completed
           </td>
           <td>
-            <button class="ui right labeled icon button green">
+            <button class="ui right labeled icon button green" @click="results">
               <i class="right arrow icon"></i>
               View Results
             </button>
@@ -72,6 +95,20 @@
 
 <script>
 export default {
+  methods: {
+    results: function () {
+      this.$router.push('manualcrawl')
+    }
+  },
+  computed: {
+    universities: function () {
+      return this.$store.state.universities
+    },
+    crawlrequests: function () {
+      console.log(this.$store.state.crawlrequests)
+      return this.$store.state.crawlrequests
+    }
+  }
 }
 </script>
 

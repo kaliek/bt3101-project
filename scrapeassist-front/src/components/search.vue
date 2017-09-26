@@ -12,13 +12,13 @@
         <div class="ui large form">
           <div class="field">
             <uSelect></uSelect>
-            <button class="circular ui icon button">
+            <button class="circular ui icon button" data-content="Add a new University">
               <i class="icon plus"></i>
             </button>
           </div>
           <div class="field">
             <fSelect></fSelect>
-            <button class="circular ui icon button">
+            <button class="circular ui icon button" data-content="Add a new Faculty">
               <i class="icon plus"></i>
             </button>
           </div>
@@ -37,12 +37,16 @@
 <script>
 import uSelect from '@/components/university-selector'
 import fSelect from '@/components/faculty-selector'
+import $ from 'jquery'
 export default {
   components: {
     uSelect: uSelect,
     fSelect: fSelect
   },
   mounted: function () {
+    $(this.$el).find('.circular.button').popup({
+      position: 'right center'
+    })
     this.$on('selectUniversity', function (v) {
       this.uIds = v
     })
@@ -65,7 +69,11 @@ export default {
       })
     },
     requestCrawl: function () {
-      this.$router.push('crawlrequest')
+      this.$store.commit('setCrawlRequest', {
+        uIds: this.uIds,
+        fId: this.fId,
+        router: this.$router
+      })
     }
   },
   computed: {

@@ -5,6 +5,7 @@ import search from '@/components/search'
 import database from '@/components/database'
 import crawlrequest from '@/components/crawlrequest'
 import crawlmonitor from '@/components/crawlmonitor'
+import manualcrawl from '@/components/manualcrawl'
 
 Vue.use(Router)
 
@@ -34,6 +35,11 @@ export default new Router({
       path: '/crawlmonitor',
       name: 'crawlmonitor',
       component: crawlmonitor
+    },
+    {
+      path: '/manualcrawl',
+      name: 'manualcrawl',
+      component: manualcrawl
     }
   ]
 })

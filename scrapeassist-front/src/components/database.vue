@@ -133,6 +133,7 @@ export default {
       if (!this.$store.state.fId) {
         return
       }
+      this.resetFilters()
       this.$store.dispatch('searchProfessors', {
         uIds: v,
         fId: this.$store.state.fId,
@@ -143,6 +144,7 @@ export default {
       if (!(0 in this.$store.state.uIds)) {
         return
       }
+      this.resetFilters()
       this.$store.dispatch('searchProfessors', {
         uIds: this.$store.state.uIds,
         fId: v,
@@ -162,7 +164,11 @@ export default {
   },
   methods: {
     crawlRequest: function () {
-      this.$router.push('crawlrequest')
+      this.$store.commit('setCrawlRequest', {
+        uIds: this.$store.state.uIds,
+        fId: this.$store.state.fId,
+        router: this.$router
+      })
     },
     sortList: function (sortKey) {
       this.k = sortKey
@@ -173,6 +179,13 @@ export default {
       } else {
         this.$set(s, id, true)
       }
+    },
+    resetFilters: function () {
+      this.minPhdYear = ''
+      this.minPromotionYear = ''
+      this.selPhdInsts = {}
+      this.selPromotionInsts = {}
+      this.selRanks = {}
     }
   },
   computed: {
@@ -202,6 +215,9 @@ export default {
           }.bind(this)
         }.bind(this)
       }
+      var academicRanksRejected = new Set(this.academicRanks.filter((_, i) => i in this.selRanks))
+      var phdInstitutionsRejected = new Set(this.phdInstitutions.filter((_, i) => i in this.selPhdInsts))
+      var promotionInstitutionsRejected = new Set(this.promotionInstitutions.filter((_, i) => i in this.selPromotionInsts))
       var filterFn = function (e) {
         var phdYearFilter = true
         if (!isNaN(this.minPhdYear) && ('phdYear' in e && e.phdYear < parseInt(this.minPhdYear))) {
@@ -215,7 +231,7 @@ export default {
         } else if (!isNaN(this.minPromotionYear) && !('promotionYear' in e)) {
           promotionYearFilter = false
         }
-        return (phdYearFilter || this.minPhdYear === '') && (promotionYearFilter || this.minPromotionYear === '')
+        return (phdYearFilter || this.minPhdYear === '') && (promotionYearFilter || this.minPromotionYear === '') && !academicRanksRejected.has(e.rank) && !phdInstitutionsRejected.has(e.phdInstitution) && !promotionInstitutionsRejected.has(e.promotionInstitution)
       }.bind(this)
       return this.$store.state.dbSearchResults.sort(cmpFn(this.k)).filter(filterFn)
     },
@@ -226,13 +242,13 @@ export default {
       return this.$store.state.faculties
     },
     academicRanks: function () {
-      return [...new Set(this.results.map(i => i.rank))]
+      return [...new Set(this.results.map(i => i.rank || '(Blank)'))]
     },
     phdInstitutions: function () {
-      return [...new Set(this.results.map(i => i.phdInstitution))]
+      return [...new Set(this.results.map(i => i.phdInstitution || '(Blank)'))]
     },
     promotionInstitutions: function () {
-      return [...new Set(this.results.map(i => i.promotionInstitution))]
+      return [...new Set(this.results.map(i => i.promotionInstitution || '(Blank)'))]
     }
   },
   watch: {

@@ -51,5 +51,19 @@ crawlrequests.attachSchema(crawlrequestSchema);
 Meteor.methods({
   createCrawlRequest: function(fUrl, uId, fId) {
     crawlrequests.insert({facultyUrl: fUrl, universityId: uId, facultyId: fId})
+  },
+  createCrawlRequests: function(fUrls, uIds, fId) {
+    if (fUrls.length !== uIds.length) {
+      throw new Meteor.Error('Faculty URLs', 'All Faculty URLs must be filled')
+    }
+    for (i in fUrls) {
+      crawlrequests.insert({facultyUrl: fUrls[i], universityId: uIds[i], facultyId: fId})
+    }
+  }
+})
+
+Meteor.publish({
+  allCrawlRequests: function () {
+    return crawlrequests.find({})
   }
 })
