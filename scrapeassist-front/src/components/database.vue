@@ -23,31 +23,25 @@
             <input placeholder="Min Promotion Year..." type="text" v-model="minPromotionYear">
           </div>
         </div>
-        <div class="ui dropdown item">
+        <div class="ui simple dropdown item sub">
           Academic Rank
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
-            <a class="item">Edit Profile</a>
-            <a class="item">Choose Language</a>
-            <a class="item">Account Settings</a>
+          <div class="menu sub">
+            <a class="item" v-for="(i,id) in academicRanks" :class="{selected: id in selRanks}" @click="selectFilter(id, selRanks)">{{i}}</a>
           </div>
         </div>
-        <div class="ui dropdown item">
+        <div class="ui simple dropdown item sub">
           PhD Institution
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
-            <a class="item">Edit Profile</a>
-            <a class="item">Choose Language</a>
-            <a class="item">Account Settings</a>
+          <div class="menu sub">
+            <a class="item" v-for="(i,id) in phdInstitutions" :class="{selected: id in selPhdInsts}" @click="selectFilter(id, selPhdInsts)">{{i}}</a>
           </div>
         </div>
-        <div class="ui dropdown item">
+        <div class="ui simple dropdown item sub">
           Promotion Instution
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
-            <a class="item">Edit Profile</a>
-            <a class="item">Choose Language</a>
-            <a class="item">Account Settings</a>
+          <div class="menu sub">
+            <a class="item" v-for="(i,id) in promotionInstitutions" :class="{selected: id in selPromotionInsts}" @click="selectFilter(id, selPromotionInsts)">{{i}}</a>
           </div>
         </div>
         <div class="item">
@@ -71,7 +65,7 @@
           </button>
         </div>
         <div class="item">
-          <button class="ui button">
+          <button class="ui button" @click="crawlRequest">
             <i class="share icon"></i>
             Submit Crawl Request
           </button>
@@ -80,16 +74,10 @@
     </div>
     <div id="search-bar">
       <div class="university field">
-        <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
-          <option value=""><i class="university icon"></i>University</option>
-          <option v-for="(u,idx) in universities" v-bind:value="idx">{{u.name}}</option>
-        </select>
+        <uSelect :uIds="$store.state.uIds"></uSelect>
       </div>
       <div class="faculty field">
-        <select name="faculty" class="ui fluid dropdown" id="faculty-select">
-          <option value=""><i class="building icon"></i>Faculty</option>
-          <option v-for="(f,idx) in faculties" v-bind:value="idx">{{f.name}}</option>
-        </select>
+        <fSelect :fId="$store.state.fId"></fSelect>
       </div>
     </div>
     <div class="ui segment" id="segment">
@@ -127,26 +115,49 @@
 
 <script>
 import $ from 'jquery'
+import uSelect from '@/components/university-selector'
+import fSelect from '@/components/faculty-selector'
 export default {
+  components: {
+    uSelect: uSelect,
+    fSelect: fSelect
+  },
   mounted: function () {
-    this.uSelect = $(this.$el).find('#university-select').dropdown()
-    this.uSelect.dropdown('set exactly', this.$store.state.uIds)
-    this.fSelect = $(this.$el).find('#faculty-select').dropdown()
-    this.fSelect.dropdown('set value', this.$store.state.fId)
-    $(this.$el).find('.dropdown').dropdown()
+    $(this.$el).find('.menu.sub').css('overflow', 'auto')
     $(this.$el).find('#mouseover-zone').on('mouseover', function (e) {
       $('#filter-menu').addClass('visible')
     }).on('mouseout', function (e) {
       $('#filter-menu').removeClass('visible')
     })
+    this.$on('selectUniversity', function (v) {
+      if (!this.$store.state.fId) {
+        return
+      }
+      this.$store.dispatch('searchProfessors', {
+        uIds: v,
+        fId: this.$store.state.fId,
+        router: this.$router
+      })
+    }.bind(this))
+    this.$on('selectFaculty', function (v) {
+      if (!(0 in this.$store.state.uIds)) {
+        return
+      }
+      this.$store.dispatch('searchProfessors', {
+        uIds: this.$store.state.uIds,
+        fId: v,
+        router: this.$router
+      })
+    }.bind(this))
   },
   data: function () {
     return {
-      uSelect: null,
-      fSelect: null,
       k: 'name',
       minPhdYear: '',
-      minPromotionYear: ''
+      minPromotionYear: '',
+      selPhdInsts: {},
+      selPromotionInsts: {},
+      selRanks: {}
     }
   },
   methods: {
@@ -155,6 +166,13 @@ export default {
     },
     sortList: function (sortKey) {
       this.k = sortKey
+    },
+    selectFilter: function (id, s) {
+      if (id in s) {
+        this.$delete(s, id)
+      } else {
+        this.$set(s, id, true)
+      }
     }
   },
   computed: {
@@ -199,13 +217,22 @@ export default {
         }
         return (phdYearFilter || this.minPhdYear === '') && (promotionYearFilter || this.minPromotionYear === '')
       }.bind(this)
-      return this.$store.state.professorsList.sort(cmpFn(this.k)).filter(filterFn)
+      return this.$store.state.dbSearchResults.sort(cmpFn(this.k)).filter(filterFn)
     },
     universities: function () {
       return this.$store.state.universities
     },
     faculties: function () {
       return this.$store.state.faculties
+    },
+    academicRanks: function () {
+      return [...new Set(this.results.map(i => i.rank))]
+    },
+    phdInstitutions: function () {
+      return [...new Set(this.results.map(i => i.phdInstitution))]
+    },
+    promotionInstitutions: function () {
+      return [...new Set(this.results.map(i => i.promotionInstitution))]
     }
   },
   watch: {
@@ -231,7 +258,7 @@ export default {
   height: 700px;
   width: 250px;
   position: absolute;
-  top: 150px;
+  top: calc(50vh - 350px);
   left: 0;
   z-index: 4;
 }
@@ -337,5 +364,10 @@ export default {
 
 .flip-list-move {
   transition: transform 1s;
+}
+
+.menu.sub {
+  max-height: 300px;
+  transform: translateY(-40px);
 }
 </style>

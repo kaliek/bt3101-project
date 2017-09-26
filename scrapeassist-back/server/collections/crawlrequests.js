@@ -9,7 +9,7 @@ crawlrequests.deny({
 });
 
 const crawlrequestSchema = new SimpleSchema({
-  timeStamp: {
+  timeStampStart: {
     type: Date,
     autoValue: function() {
       if (!this.isUpdate) {
@@ -17,8 +17,13 @@ const crawlrequestSchema = new SimpleSchema({
       }
     }
   },
+  timeStampEnd: {
+    type: Date,
+    optional: true
+  },
   status: {
-    type: Array
+    type: Array,
+    defaultValue: []
   },
   'status.$': {
     type: Boolean
@@ -42,3 +47,9 @@ const crawlrequestSchema = new SimpleSchema({
 });
 
 crawlrequests.attachSchema(crawlrequestSchema);
+
+Meteor.methods({
+  createCrawlRequest: function(fUrl, uId, fId) {
+    crawlrequests.insert({facultyUrl: fUrl, universityId: uId, facultyId: fId})
+  }
+})

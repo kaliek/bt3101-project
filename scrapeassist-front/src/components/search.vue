@@ -11,19 +11,13 @@
         </h2>
         <div class="ui large form">
           <div class="field">
-            <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
-              <option value=""><i class="university icon"></i>University</option>
-              <option v-for="(u,idx) in universities" v-bind:value="idx">{{u.name}}</option>
-            </select>
+            <uSelect></uSelect>
             <button class="circular ui icon button">
               <i class="icon plus"></i>
             </button>
           </div>
           <div class="field">
-            <select name="faculty" class="ui fluid dropdown" id="faculty-select">
-              <option value=""><i class="building icon"></i>Faculty</option>
-              <option v-for="(f,idx) in faculties" v-bind:value="idx">{{f.name}}</option>
-            </select>
+            <fSelect></fSelect>
             <button class="circular ui icon button">
               <i class="icon plus"></i>
             </button>
@@ -41,23 +35,32 @@
 </template>
 
 <script>
-import $ from 'jquery'
+import uSelect from '@/components/university-selector'
+import fSelect from '@/components/faculty-selector'
 export default {
+  components: {
+    uSelect: uSelect,
+    fSelect: fSelect
+  },
   mounted: function () {
-    this.uSelect = $(this.$el).find('#university-select').dropdown()
-    this.fSelect = $(this.$el).find('#faculty-select').dropdown()
+    this.$on('selectUniversity', function (v) {
+      this.uIds = v
+    })
+    this.$on('selectFaculty', function (v) {
+      this.fId = v
+    })
   },
   data: function () {
     return {
-      uSelect: null,
-      fSelect: null
+      uIds: [],
+      fId: ''
     }
   },
   methods: {
     search: function () {
       this.$store.dispatch('searchProfessors', {
-        uIds: this.uSelect.dropdown('get value'),
-        fId: this.fSelect.dropdown('get value'),
+        uIds: this.uIds,
+        fId: this.fId,
         router: this.$router
       })
     },

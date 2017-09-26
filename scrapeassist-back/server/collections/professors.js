@@ -94,7 +94,6 @@ if (!professors.find({}).count()) {
 
 Meteor.methods({
   searchProfessors: function (uIds, fId) {
-    console.log('called')
     return professors.find({universityId: {$in: uIds}, facultyId: fId}).fetch()
   }
 })

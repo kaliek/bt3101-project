@@ -78,7 +78,6 @@ const store = new Vuex.Store({
       s.dbSearchResults = p
     },
     setSelectedIds: function (s, {uIds, fId}) {
-      console.log('setting stuff!')
       s.uIds = uIds
       s.fId = fId
     }
@@ -107,7 +106,6 @@ const store = new Vuex.Store({
     searchProfessors: function ({ commit, state }, {uIds, fId, router}) {
       commit('setSelectedIds', {uIds: uIds, fId: fId})
       state.conn.call('searchProfessors', uIds, fId).then(function (r) {
-        console.log(r)
         commit('setDbSearchResults', r)
         router.push('database')
       }).catch(function (e) {
