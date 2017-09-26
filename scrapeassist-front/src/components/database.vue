@@ -26,25 +26,21 @@
         <div class="ui dropdown item">
           Academic Rank
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
-            <a class="item">Edit Profile</a>
-            <a class="item">Choose Language</a>
-            <a class="item">Account Settings</a>
+          <div class="menu">
+            <a class="item"></a>
           </div>
         </div>
-        <div class="ui dropdown item">
+        <div class="ui dropdown item" id="phdInst-dropdown">
           PhD Institution
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
-            <a class="item">Edit Profile</a>
-            <a class="item">Choose Language</a>
-            <a class="item">Account Settings</a>
+          <div class="menu">
+            <a class="item" v-for="i in phdInstitutions">{{i}}</a>
           </div>
         </div>
         <div class="ui dropdown item">
           Promotion Instution
           <i class="dropdown icon"></i>
-          <div class="menu" id="academic-popup">
+          <div class="menu">
             <a class="item">Edit Profile</a>
             <a class="item">Choose Language</a>
             <a class="item">Account Settings</a>
@@ -133,7 +129,7 @@ export default {
     this.uSelect.dropdown('set exactly', this.$store.state.uIds)
     this.fSelect = $(this.$el).find('#faculty-select').dropdown()
     this.fSelect.dropdown('set value', this.$store.state.fId)
-    $(this.$el).find('.dropdown').dropdown()
+    $(this.$el).find('#phdInst-dropdown').dropdown()
     $(this.$el).find('#mouseover-zone').on('mouseover', function (e) {
       $('#filter-menu').addClass('visible')
     }).on('mouseout', function (e) {
@@ -199,13 +195,16 @@ export default {
         }
         return (phdYearFilter || this.minPhdYear === '') && (promotionYearFilter || this.minPromotionYear === '')
       }.bind(this)
-      return this.$store.state.professorsList.sort(cmpFn(this.k)).filter(filterFn)
+      return this.$store.state.dbSearchResults.sort(cmpFn(this.k)).filter(filterFn)
     },
     universities: function () {
       return this.$store.state.universities
     },
     faculties: function () {
       return this.$store.state.faculties
+    },
+    phdInstitutions: function () {
+      return [...new Set(this.$store.state.dbSearchResults.map(e => e.phdInstitution))]
     }
   },
   watch: {
@@ -216,6 +215,7 @@ export default {
     }
   }
 }
+//
 </script>
 
 <style scoped>
@@ -337,5 +337,10 @@ export default {
 
 .flip-list-move {
   transition: transform 1s;
+}
+
+.dropdown > .menu {
+  max-height: 300px;
+  overflow: auto;
 }
 </style>
