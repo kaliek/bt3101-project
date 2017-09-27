@@ -19,11 +19,20 @@ const crawlrequestSchema = new SimpleSchema({
   },
   timeStampEnd: {
     type: Date,
+    autoValue: function () {
+      if (this.isUpdate) {
+        if (this.field('status').value.every(e => e)) {
+          return new Date();
+        } else {
+          this.unSet()
+        }
+      }
+    },
     optional: true
   },
   status: {
     type: Array,
-    defaultValue: []
+    defaultValue: [false, false]
   },
   'status.$': {
     type: Boolean

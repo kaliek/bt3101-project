@@ -47,11 +47,11 @@
         <div class="item">
           <div id="view-menu">
             <div class="ui labeled icon menu">
-              <a class="item">
+              <a class="item" :class="{active: layout === 'dbList'}" @click="setLayout('dbList')">
                 <i class="list layout icon"></i>
                 <span class="view-label">List View</span>
               </a>
-              <a class="item">
+              <a class="item" :class="{active: layout === 'dbGrid'}" @click="setLayout('dbGrid')">
                 <i class="block layout icon"></i>
                 <span class="view-label">Grid View</span>
               </a>
@@ -80,36 +80,8 @@
         <fSelect :fId="$store.state.fId"></fSelect>
       </div>
     </div>
-    <div class="ui segment" id="segment">
-      <div class="ui item small header">
-        <div class="ui grid">
-          <div class="two wide column">Name</div>
-          <div class="two wide column">Current Institution</div>
-          <div class="one wide column">Academic Rank</div>
-          <div class="one wide column">Year of PhD</div>
-          <div class="two wide column">PhD Institution</div>
-          <div class="one wide column">Year of Promotion</div>
-          <div class="two wide column">Promotion Institution</div>
-          <div class="five wide column">Research Interests</div>
-        </div>
-      </div>
-      <div class="list-outer" id="results-list">
-        <div name="flip-list" class="ui relaxed divided list" tag="div" id="results-list-inner">
-          <div class="ui item prof" v-for="i in professors">
-            <div class="ui grid">
-              <div class="two wide column">{{i.name}}</div>
-              <div class="two wide column">{{universities[i.universityId].name}}</div>
-              <div class="one wide column">{{i.rank}}</div>
-              <div class="one wide column">{{i.phdYear}}</div>
-              <div class="two wide column">{{i.phdInstitution}}</div>
-              <div class="one wide column">{{i.promotionYear}}</div>
-              <div class="two wide column">{{i.promotionInstitution}}</div>
-              <div class="five wide column">{{i.researchInterests}}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- <dbList :professors="professors"></dbList> -->
+    <component :is="layout" :professors="professors"></component>
   </div>
 </template>
 
@@ -117,10 +89,15 @@
 import $ from 'jquery'
 import uSelect from '@/components/university-selector'
 import fSelect from '@/components/faculty-selector'
+import dbList from '@/components/database-list'
+import dbGrid from '@/components/database-grid'
 export default {
   components: {
     uSelect: uSelect,
-    fSelect: fSelect
+    fSelect: fSelect,
+    dbList: dbList,
+    dbGrid: dbGrid
+
   },
   mounted: function () {
     $(this.$el).find('.menu.sub').css('overflow', 'auto')
@@ -154,6 +131,7 @@ export default {
   },
   data: function () {
     return {
+      layout: 'dbList',
       k: 'name',
       minPhdYear: '',
       minPromotionYear: '',
@@ -163,6 +141,9 @@ export default {
     }
   },
   methods: {
+    setLayout: function (l) {
+      this.layout = l
+    },
     crawlRequest: function () {
       this.$store.commit('setCrawlRequest', {
         uIds: this.$store.state.uIds,
@@ -259,7 +240,6 @@ export default {
     }
   }
 }
-//
 </script>
 
 <style scoped>
@@ -322,6 +302,14 @@ export default {
   font-size: small;
 }
 
+#view-menu .item {
+  border-radius: 0.28571429rem;
+}
+
+#view-menu .item.active {
+  background-color: rgba(0, 0, 0, .1) !important;
+}
+
 #search-bar {
   padding: 10px;
   border-bottom: 2px solid rgba(0, 0, 0, 0.5);
@@ -331,56 +319,12 @@ export default {
   flex: 0 0 auto;
 }
 
-#segment {
-  flex: 1 1 auto;
-  margin: 0px;
-  border: none;
-  position: relative;
-  margin-top: 2px;
-  padding: 10px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow-y: hidden;
-}
-
 .field.university {
   width: calc(75% - 10px);
 }
 
 .field.faculty {
   width: calc(25% - 10px);
-}
-
-.column {
-  padding: 5px !important;
-}
-
-.ui.grid {
-  position: relative;
-  width: 100%;
-  margin: 0px;
-}
-
-.ui.item.header {
-  width: 100%;
-  flex: 0 0 auto;
-  border-bottom: 2px solid rgba(34, 36, 38, 0.15);
-  margin-bottom: 0px;
-}
-
-.ui.item.prof {
-  margin: 0px;
-  color: rgba(0, 0, 0, 0.8);
-}
-
-#results-list {
-  flex: 0 1 auto;
-  overflow: auto;
-}
-
-.flip-list-move {
-  transition: transform 1s;
 }
 
 .menu.sub {
