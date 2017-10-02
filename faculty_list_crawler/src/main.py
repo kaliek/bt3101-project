@@ -18,7 +18,9 @@
 from anytree import Node, RenderTree
 from urllib import request
 from bs4 import BeautifulSoup
+from bs4.element import Tag, NavigableString
 from html.parser import HTMLParser
+
 
 import os
 
@@ -31,11 +33,32 @@ class Analyser:
     """
     def __init__(self):
         self.soup = None
+        self.soup_memory = []
 
-    def find_most_children(self):
-        childrens = self.soup.findChildren()
-        for child in childrens:
-            print(child)
+    def build_soup(self):
+        self.soup = BeautifulSoup(open('../temp/University of Colorado – Boulder.html', 'r', encoding='utf-8').read(), 'lxml')
+        # self.soup = BeautifulSoup(open('../temp/University College London.html', 'r', encoding='utf-8').read(), 'lxml')
+
+    def get_body(self):
+        return self.soup.body
+
+    def find_most_children(self, element):
+        for child in element.contents:
+            if isinstance(child, Tag):
+                count = self.find_number_of_direct_tags(child)
+                self.soup_memory.append((count, child))
+                self.find_most_children(child)
+
+    def find_number_of_direct_tags(self, element):
+        counter = 0
+        for child in element.contents:
+            if isinstance(child, Tag):
+                counter += 1
+        return counter
+
+    def get_highest_elemment(self):
+        self.soup_memory.sort(key=lambda x:x[0], reverse=True)
+        print(self.soup_memory[0])
 
 
 class Downloader:
@@ -68,18 +91,7 @@ class Loader:
 
 
 if __name__ == '__main__':
-
-    class MyHTMLParser(HTMLParser):
-        def handle_starttag(self, tag, attrs):
-            print("Encountered a start tag:", tag)
-
-        def handle_endtag(self, tag):
-            print("Encountered an end tag :", tag)
-
-        def handle_data(self, data):
-            print("Encountered some data  :", data)
-
-
-    parser = MyHTMLParser()
-    parser.feed(open('../temp/University College London.html', 'r', encoding='utf-8').read())
-
+    a = Analyser()
+    a.build_soup()
+    a.find_most_children(a.get_body())
+    a.get_highest_elemment()
