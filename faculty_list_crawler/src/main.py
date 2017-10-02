@@ -15,10 +15,10 @@
 
     University of Oxford: http://www.geog.ox.ac.uk/staff/
 """
-
-
+from anytree import Node, RenderTree
 from urllib import request
 from bs4 import BeautifulSoup
+from html.parser import HTMLParser
 
 import os
 
@@ -29,7 +29,13 @@ class Analyser:
         given the url of the faculty list
         output the data in structured format
     """
-    pass
+    def __init__(self):
+        self.soup = None
+
+    def find_most_children(self):
+        childrens = self.soup.findChildren()
+        for child in childrens:
+            print(child)
 
 
 class Downloader:
@@ -61,5 +67,19 @@ class Loader:
     """
 
 
+if __name__ == '__main__':
 
+    class MyHTMLParser(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            print("Encountered a start tag:", tag)
+
+        def handle_endtag(self, tag):
+            print("Encountered an end tag :", tag)
+
+        def handle_data(self, data):
+            print("Encountered some data  :", data)
+
+
+    parser = MyHTMLParser()
+    parser.feed(open('../temp/University College London.html', 'r', encoding='utf-8').read())
 

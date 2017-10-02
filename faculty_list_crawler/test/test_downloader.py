@@ -7,9 +7,7 @@ class TestDownloader(unittest.TestCase):
 
     TEST_LIST = [
         ("University College London", "http://www.geog.ucl.ac.uk/people/academic-staff"),
-        ("University of Colorado – Boulder", "http://www.colorado.edu/geography/ppl4/faculty"),
-
-
+        ("University of Colorado – Boulder", "http://www.colorado.edu/geography/ppl4/faculty")
     ]
 
     def test_download(self):
