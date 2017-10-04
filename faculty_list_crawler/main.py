@@ -21,6 +21,7 @@ from bs4.element import Tag, NavigableString
 from pymongo import MongoClient
 from common import UnknownStatusException
 
+import logging
 import os
 
 
@@ -48,13 +49,6 @@ class Downloader:
     def _get_crawl_requests(self):
         return self.db[self.CRAWL_REQUEST_COLLECTION]
 
-    def process_requests(self):
-        requests = self._get_crawl_requests()
-        for user_request in requests.find():
-            self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
-
-            self._update_status("success", user_request['_id'], user_request['status'])
-
     def _update_status(self, status, request_id, original_status):
         if status == 'success':
             original_status[0] = 1
@@ -74,6 +68,15 @@ class Downloader:
             )
         else:
             raise UnknownStatusException
+
+    def process_requests(self):
+        logging.info("retrieving crawl requests from database ...")
+        user_requests = self._get_crawl_requests()
+        logging.info("{} requests found.".format(user_requests.count()))
+
+        for user_request in user_requests.find():
+            self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
+            self._update_status("success", user_request['_id'], user_request['status'])
 
 
 class Analyser:
@@ -131,4 +134,6 @@ class Loader:
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     Downloader().process_requests()
