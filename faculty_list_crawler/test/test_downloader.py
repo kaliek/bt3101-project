@@ -1,6 +1,6 @@
-from faculty_list_crawler.src.main import Downloader
-
 import unittest
+
+from faculty_list_crawler.main import Downloader
 
 
 class TestDownloader(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestDownloader(unittest.TestCase):
         downloader = Downloader()
 
         for item in self.TEST_LIST:
-            downloader.download(*item)
+            downloader._download(*item)
 
 
 if __name__ == '__main__':

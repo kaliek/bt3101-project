@@ -15,14 +15,65 @@
 
     University of Oxford: http://www.geog.ox.ac.uk/staff/
 """
-from anytree import Node, RenderTree
 from urllib import request
 from bs4 import BeautifulSoup
 from bs4.element import Tag, NavigableString
-from html.parser import HTMLParser
-
+from pymongo import MongoClient
+from common import UnknownStatusException
 
 import os
+
+
+class Downloader:
+
+    """
+        handles the downloading of faculty page
+    """
+
+    DB_IP = '115.66.242.122'
+    DB_PORT = 9212
+    PROJECT_DATABASE = 'bt3101'
+    CRAWL_REQUEST_COLLECTION = 'crawlrequests'
+
+    def __init__(self):
+        self.client = MongoClient(self.DB_IP, self.DB_PORT)
+        self.db = self.client[self.PROJECT_DATABASE]
+
+    @staticmethod
+    def _download(university_id, faculty_id, url_list):
+        if not os.path.exists(r'../temp'):
+            os.makedirs(r'../temp')
+        request.urlretrieve(url_list, filename="../temp/{}-{}.html".format(university_id, faculty_id))
+
+    def _get_crawl_requests(self):
+        return self.db[self.CRAWL_REQUEST_COLLECTION]
+
+    def process_requests(self):
+        requests = self._get_crawl_requests()
+        for user_request in requests.find():
+            self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
+
+            self._update_status("success", user_request['_id'], user_request['status'])
+
+    def _update_status(self, status, request_id, original_status):
+        if status == 'success':
+            original_status[0] = 1
+            self.db[self.CRAWL_REQUEST_COLLECTION].update(
+                {"_id": request_id},
+                {
+                    '$set': {"status": original_status}
+                }
+            )
+        elif status == 'failure':
+            original_status[0] = 2
+            self.db[self.CRAWL_REQUEST_COLLECTION].update(
+                {"_id": request_id},
+                {
+                    '$set': {"status": original_status}
+                }
+            )
+        else:
+            raise UnknownStatusException
 
 
 class Analyser:
@@ -61,18 +112,7 @@ class Analyser:
         print(self.soup_memory[0])
 
 
-class Downloader:
 
-    """
-        handles the downloading of faculty page
-    """
-
-    @staticmethod
-    def download(university_name, url_list):
-        if not os.path.exists(r'../temp'):
-            os.makedirs(r'../temp')
-
-        request.urlretrieve(url_list, filename="../temp/{}.html".format(university_name))
 
 
 class Verifier:
@@ -91,7 +131,4 @@ class Loader:
 
 
 if __name__ == '__main__':
-    a = Analyser()
-    a.build_soup()
-    a.find_most_children(a.get_body())
-    a.get_highest_elemment()
+    Downloader().process_requests()
