@@ -75,7 +75,6 @@ class Downloader:
 
 class Analyser:
 
-
     """
         given the url of the faculty list
         output the data in structured format
@@ -85,7 +84,6 @@ class Analyser:
 
     def __init__(self):
         self.soup_memory = []
-        self.translator = str.maketrans('', '', string.punctuation)
         self.name_dictionary = self.load_name_dictionary()
 
     def load_name_dictionary(self):
@@ -116,10 +114,10 @@ class Analyser:
         return counter
 
     def get_highest_element(self):
-        self.soup_memory.sort(key=lambda x:x[0], reverse=True)
+        self.soup_memory.sort(key=lambda x: x[0], reverse=True)
         return self.soup_memory[0][1]
 
-    # TODO: the bulk of the project: how to parse??????
+    # TODO: the core of the project: how to parse??????
     def _parse_element(self, element):
         for item in element.contents:
             if isinstance(item, Tag):
@@ -134,13 +132,23 @@ class Analyser:
                 token_list = parser.get_list()
 
                 if self.is_valid_data_row(token_list):
-                    logging.info(token_list)
-                    logging.info(len(token_list))
 
-            break
+                    clean_token_list = []
+                    for token in token_list:
+                        if not self.is_punctuation_token(token):
+                            clean_token_list.append(token)
+
+                    name_token = clean_token_list[0]  # or 0:1, will add a function to determine that
+                    name_parser = HumanName(name_token)
+                    title = name_parser.title
+                    name = name_token.replace(title, "").strip()
+                    logging.info(name)
 
     def is_valid_data_row(self, token_list):
         # test first few token are names? if not not relevant, allow friendly kills
+        if len(token_list) < 2 and len(token_list[0]) < 20:
+            return True
+
         first_token = " ".join(token_list[:2]).split(" ")
         for item in first_token:
             if item in self.name_dictionary:
@@ -151,14 +159,6 @@ class Analyser:
         if len(token) <= 2:
             return not token.isalpha()
         return False
-
-
-
-                # # remove extra space, newlines
-                # text = item.text.replace("\n", "^").strip()
-                # # check header irrelevant text
-                #
-                # # potential separator: '•', ' - '
 
     def clear_memory(self):
         self.soup_memory = []
@@ -172,7 +172,6 @@ class Analyser:
             element = self.get_highest_element()
             self.clear_memory()
             self._parse_element(element)
-            break
 
 
 class DatabaseHandler:
