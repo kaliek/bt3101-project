@@ -17,7 +17,7 @@
 """
 from urllib import request
 from bs4 import BeautifulSoup
-from bs4.element import Tag, NavigableString
+from bs4.element import Tag
 from pymongo import MongoClient
 from common import UnknownStatusException
 
@@ -25,58 +25,31 @@ import logging
 import os
 
 
+
 class Downloader:
 
     """
         handles the downloading of faculty page
     """
-
-    DB_IP = '115.66.242.122'
-    DB_PORT = 9212
-    PROJECT_DATABASE = 'bt3101'
-    CRAWL_REQUEST_COLLECTION = 'crawlrequests'
+    PATH_TO_TEMP_WEB = r'../temp'
+    FORMAT_TEMP_WEB = "../temp/{}-{}.html"
 
     def __init__(self):
-        self.client = MongoClient(self.DB_IP, self.DB_PORT)
-        self.db = self.client[self.PROJECT_DATABASE]
+        self.db_handler = DatabaseHandler()
 
-    @staticmethod
-    def _download(university_id, faculty_id, url_list):
-        if not os.path.exists(r'../temp'):
-            os.makedirs(r'../temp')
-        request.urlretrieve(url_list, filename="../temp/{}-{}.html".format(university_id, faculty_id))
-
-    def _get_crawl_requests(self):
-        return self.db[self.CRAWL_REQUEST_COLLECTION]
-
-    def _update_status(self, status, request_id, original_status):
-        if status == 'success':
-            original_status[0] = 1
-            self.db[self.CRAWL_REQUEST_COLLECTION].update(
-                {"_id": request_id},
-                {
-                    '$set': {"status": original_status}
-                }
-            )
-        elif status == 'failure':
-            original_status[0] = 2
-            self.db[self.CRAWL_REQUEST_COLLECTION].update(
-                {"_id": request_id},
-                {
-                    '$set': {"status": original_status}
-                }
-            )
-        else:
-            raise UnknownStatusException
+    def _download(self, university_id, faculty_id, url_list):
+        if not os.path.exists(self.PATH_TO_TEMP_WEB):
+            os.makedirs(self.PATH_TO_TEMP_WEB)
+        request.urlretrieve(url_list, filename=self.FORMAT_TEMP_WEB.format(university_id, faculty_id))
 
     def process_requests(self):
         logging.info("retrieving crawl requests from database ...")
-        user_requests = self._get_crawl_requests()
+        user_requests = self.db_handler.get_crawl_requests()
         logging.info("{} requests found.".format(user_requests.count()))
 
         for user_request in user_requests.find():
             self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
-            self._update_status("success", user_request['_id'], user_request['status'])
+            self.db_handler.update_status("success", user_request['_id'], user_request['status'])
 
 
 class Analyser:
@@ -89,7 +62,7 @@ class Analyser:
         self.soup = None
         self.soup_memory = []
 
-    def build_soup(self):
+    def _build_soup(self):
         self.soup = BeautifulSoup(open('../temp/University of Colorado – Boulder.html', 'r', encoding='utf-8').read(), 'lxml')
         # self.soup = BeautifulSoup(open('../temp/University College London.html', 'r', encoding='utf-8').read(), 'lxml')
 
@@ -115,25 +88,47 @@ class Analyser:
         print(self.soup_memory[0])
 
 
-
-
-
-class Verifier:
+class DatabaseHandler:
 
     """
-        handles the determination of attribute type
+        handles operation to database
+        the DB used during developmment is an instance of MongoDB hosted on Theodore's personal server
+        the production DB would require further discussion
     """
-    pass
 
+    DB_IP = '115.66.242.122'
+    DB_PORT = 9212
+    PROJECT_DATABASE = 'bt3101'
+    CRAWL_REQUEST_COLLECTION = 'crawlrequests'
 
-class Loader:
+    def __init__(self):
+        self.client = MongoClient(self.DB_IP, self.DB_PORT)
+        self.db = self.client[self.PROJECT_DATABASE]
 
-    """
-        handles the storing of verified data
-    """
+    def get_crawl_requests(self):
+        return self.db[self.CRAWL_REQUEST_COLLECTION]
+
+    def update_status(self, status, request_id, original_status):
+        if status == 'success':
+            original_status[0] = 1
+            self.db[self.CRAWL_REQUEST_COLLECTION].update(
+                {"_id": request_id},
+                {
+                    '$set': {"status": original_status}
+                }
+            )
+        elif status == 'failure':
+            original_status[0] = 2
+            self.db[self.CRAWL_REQUEST_COLLECTION].update(
+                {"_id": request_id},
+                {
+                    '$set': {"status": original_status}
+                }
+            )
+        else:
+            raise UnknownStatusException
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-
     Downloader().process_requests()
