@@ -81,6 +81,7 @@ class Analyser:
     """
 
     PATH_TO_TEMP_WEB = r'temp'
+    STOP_WORDS = ['academic']
 
     def __init__(self):
         self.soup_memory = []
@@ -133,21 +134,74 @@ class Analyser:
 
                 if self.is_valid_data_row(token_list):
 
-                    clean_token_list = []
-                    for token in token_list:
-                        if not self.is_punctuation_token(token):
-                            clean_token_list.append(token)
+                    clean_token_list = self.clean_punctuation(token_list)
 
-                    name_token = clean_token_list[0]  # or 0:1, will add a function to determine that
+                    # logging.info("Token list: {}".format(clean_token_list))
+
+                    # check is a list of names or one name ？？？
+
+                    # assume its always a name per row
+                    # assume first or second token is name, parse name
+
+                    # ========= Name =========
+
+                    name_token = clean_token_list[0].strip()  # or 0:1, will add a function to determine that
+
+                    if " " not in name_token:
+                        name_token += " " + clean_token_list[1]
+                    name_token = name_token.strip()
                     name_parser = HumanName(name_token)
                     title = name_parser.title
                     name = name_token.replace(title, "").strip()
-                    logging.info(name)
+
+                    # post clean
+                    if "-" in name:
+                        name = name.split("-")[0].strip()
+
+                    # ========= Position ==========
+                    # only allow, professor, assoc prof, assist prof and reader
+                    position = ""
+                    for token_lower in clean_token_list[1:]:
+                        if "Professor" in token_lower or "Prof" in token_lower:
+                            if "Associate" in token_lower or "Assoc" in token_lower:
+                                position = "Associate Professor"
+                                break
+                            elif "Assistant" in token_lower:
+                                position = "Assistant Professor"
+                                break
+                            else:
+                                position = "Professor"
+                                break
+                        else:
+                            if "Reader" in token_lower:
+                                position = "Reader"
+                                break
+                    logging.info(name + " " + position)
+
+    def clean_punctuation(self, token_list):
+        clean_token_list = []
+        for token in token_list:
+            if not self.is_punctuation_token(token):
+                clean_token_list.append(token)
+        return clean_token_list
+
+    def get_name_token(self, first_token, second_token):
+        if len(first_token) < 2:
+            return first_token + second_token
+        else:
+            if len(second_token) == 1 and second_token in self.name_dictionary:
+                return first_token + second_token
+            else:
+                return first_token
 
     def is_valid_data_row(self, token_list):
-        # test first few token are names? if not not relevant, allow friendly kills
-        if len(token_list) < 2 and len(token_list[0]) < 20:
-            return True
+        first_token = token_list[0]
+        first_token_list = first_token.split(" ")
+        if len(first_token_list) > 5:
+            return False
+
+        if self._is_in_stop_words(first_token):
+            return False
 
         first_token = " ".join(token_list[:2]).split(" ")
         for item in first_token:
@@ -155,12 +209,19 @@ class Analyser:
                 return True
         return False
 
-    def is_punctuation_token(self, token):
+    def _is_in_stop_words(self, token):
+        for stopwords in self.STOP_WORDS:
+            if stopwords in token.lower():
+                return True
+        return False
+
+    @staticmethod
+    def is_punctuation_token(token):
         if len(token) <= 2:
             return not token.isalpha()
         return False
 
-    def clear_memory(self):
+    def _clear_memory(self):
         self.soup_memory = []
 
     def analyse_web(self):
@@ -170,7 +231,7 @@ class Analyser:
             body_tag = soup.body
             self.find_most_children(body_tag)
             element = self.get_highest_element()
-            self.clear_memory()
+            self._clear_memory()
             self._parse_element(element)
 
 
