@@ -24,7 +24,6 @@ from nameparser import HumanName
 import logging
 import os
 from html.parser import HTMLParser
-import string
 
 
 class MyHTMLParser(HTMLParser):
@@ -92,19 +91,21 @@ class Analyser:
     def __init__(self):
         self.soup_memory = []
         self.name_dictionary = self._load_name_dictionary()
+        self.dh_handler = DatabaseHandler()
 
     # --- public API ---
 
     def run(self):
         files = os.listdir(self.PATH_TO_TEMP_WEB)
-        for temp_file in files:
-            soup = self._build_soup(temp_file)
+        for file_name in files:
+            university_id, faculty_id = file_name.replace(".html", "").split("-")
+            soup = self._build_soup(file_name)
             body_tag = soup.body
             self._count_direct_children_recursive(body_tag)
             element = self._get_most_children_element()
-            self.parse_html_and_store(element)
+            self.parse_html_and_store(element, university_id, faculty_id)
 
-    def parse_html_and_store(self, element):
+    def parse_html_and_store(self, element, university_id, faculty_id):
         for item in element.contents:
             if isinstance(item, Tag):
                 parser = MyHTMLParser()
@@ -112,19 +113,18 @@ class Analyser:
                 parser.feed(feed_content)
                 data_list = parser.get_list()
 
-                if not data_list:
+                if not data_list:  # skip current loop if empty data list
                     continue
 
                 token_list = parser.get_list()
-
-                logging.info(token_list)
 
                 if self._is_valid_data_row(token_list):
                     clean_token_list = self._clean_punctuation(token_list)
 
                     name = self._parse_name(clean_token_list)
                     position = self._parse_position(clean_token_list)
-                    logging.info(name + " " + position)
+
+                    self.dh_handler.insert_professor(name, position, faculty_id, university_id)
 
     # --- private ---
 
@@ -231,9 +231,9 @@ class Analyser:
         only allow, professor, assoc prof, assist prof and reader (total 4)
 
         :param clean_token_list: list
-        :return: string
+        :return: string / None
         """
-        position = ""
+        position = None
         for token_lower in clean_token_list[1:]:
             if "Professor" in token_lower or "Prof" in token_lower:  # maintain Cap to avoid word like `profile`
                 if "Associate" in token_lower or "Assoc" in token_lower:
@@ -326,6 +326,7 @@ class DatabaseHandler:
     DB_PORT = 9212
     PROJECT_DATABASE = 'bt3101'
     CRAWL_REQUEST_COLLECTION = 'crawlrequests'
+    PROFESSOR_COLLECTION = 'professors'
 
     def __init__(self):
         self.client = MongoClient(self.DB_IP, self.DB_PORT)
@@ -355,6 +356,16 @@ class DatabaseHandler:
             )
         else:
             raise UnknownStatusException
+
+    def insert_professor(self, name, position, faculty_id, university_id):
+        self.db[self.PROFESSOR_COLLECTION].insert(
+            {
+                "rank": position,
+                "name": name,
+                "facultyId": faculty_id,
+                "universityId": university_id
+            }
+        )
 
 
 if __name__ == '__main__':
