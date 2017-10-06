@@ -118,7 +118,6 @@ class Analyser:
         self.soup_memory.sort(key=lambda x: x[0], reverse=True)
         return self.soup_memory[0][1]
 
-    # TODO: the core of the project: how to parse??????
     def _parse_element(self, element):
         for item in element.contents:
             if isinstance(item, Tag):
@@ -136,47 +135,49 @@ class Analyser:
 
                     clean_token_list = self.clean_punctuation(token_list)
 
-                    # logging.info("Token list: {}".format(clean_token_list))
-
-                    # check is a list of names or one name ？？？
-
-                    # assume its always a name per row
-                    # assume first or second token is name, parse name
-
-                    # ========= Name =========
-
-                    name_token = clean_token_list[0].strip()  # or 0:1, will add a function to determine that
-
-                    if " " not in name_token:
-                        name_token += " " + clean_token_list[1]
-                    name_token = name_token.strip()
-                    name_parser = HumanName(name_token)
-                    title = name_parser.title
-                    name = name_token.replace(title, "").strip()
-
-                    # post clean
-                    if "-" in name:
-                        name = name.split("-")[0].strip()
-
-                    # ========= Position ==========
-                    # only allow, professor, assoc prof, assist prof and reader
-                    position = ""
-                    for token_lower in clean_token_list[1:]:
-                        if "Professor" in token_lower or "Prof" in token_lower:
-                            if "Associate" in token_lower or "Assoc" in token_lower:
-                                position = "Associate Professor"
-                                break
-                            elif "Assistant" in token_lower:
-                                position = "Assistant Professor"
-                                break
-                            else:
-                                position = "Professor"
-                                break
-                        else:
-                            if "Reader" in token_lower:
-                                position = "Reader"
-                                break
+                    name = self.parse_name(clean_token_list)
+                    position = self.parse_position(clean_token_list)
                     logging.info(name + " " + position)
+
+
+
+    @staticmethod
+    def parse_name(clean_token_list):
+        # ========= Name =========
+        name_token = clean_token_list[0].strip()  # or 0:1, will add a function to determine that
+        if " " not in name_token:
+            name_token += " " + clean_token_list[1]
+        name_token = name_token.strip()
+        name_parser = HumanName(name_token)
+        title = name_parser.title
+        name = name_token.replace(title, "").strip()
+        # post clean
+        if "-" in name:
+            name = name.split("-")[0].strip()
+
+        return name
+
+    @staticmethod
+    def parse_position(clean_token_list):
+        # ========= Position ==========
+        # only allow, professor, assoc prof, assist prof and reader
+        position = ""
+        for token_lower in clean_token_list[1:]:
+            if "Professor" in token_lower or "Prof" in token_lower:
+                if "Associate" in token_lower or "Assoc" in token_lower:
+                    position = "Associate Professor"
+                    break
+                elif "Assistant" in token_lower:
+                    position = "Assistant Professor"
+                    break
+                else:
+                    position = "Professor"
+                    break
+            else:
+                if "Reader" in token_lower:
+                    position = "Reader"
+                    break
+        return position
 
     def clean_punctuation(self, token_list):
         clean_token_list = []
