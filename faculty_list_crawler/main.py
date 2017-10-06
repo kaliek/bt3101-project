@@ -68,9 +68,12 @@ class Downloader:
         user_requests = self.db_handler.get_crawl_requests()
         logging.info("{} requests found.".format(user_requests.count()))
 
-        for user_request in user_requests.find():
-            self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
-            self.db_handler.update_status("success", user_request['_id'], user_request['status'])
+        for user_request in user_requests:
+            try:
+                self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
+                self.db_handler.update_status("success", user_request['_id'], user_request['status'])
+            except ValueError:  # invalid url
+                self.db_handler.update_status("failure", user_request['_id'], user_request['status'])
 
 
 class Analyser:
@@ -131,6 +134,8 @@ class Analyser:
 
                 token_list = parser.get_list()
 
+                logging.info(token_list)
+
                 if self.is_valid_data_row(token_list):
 
                     clean_token_list = self.clean_punctuation(token_list)
@@ -139,7 +144,7 @@ class Analyser:
                     position = self.parse_position(clean_token_list)
                     logging.info(name + " " + position)
 
-
+                    break
 
     @staticmethod
     def parse_name(clean_token_list):
@@ -254,7 +259,9 @@ class DatabaseHandler:
         self.db = self.client[self.PROJECT_DATABASE]
 
     def get_crawl_requests(self):
-        return self.db[self.CRAWL_REQUEST_COLLECTION]
+        return self.db[self.CRAWL_REQUEST_COLLECTION].find(
+            {"status": [0, 0, 0]}
+        )
 
     def update_status(self, status, request_id, original_status):
         if status == 'success':
@@ -279,5 +286,5 @@ class DatabaseHandler:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    # Downloader().process_requests()
-    Analyser().analyse_web()
+    Downloader().process_requests()
+    # Analyser().analyse_web()
