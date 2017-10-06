@@ -78,6 +78,7 @@ class Analyser:
 
     def run(self):
         files = os.listdir(self.PATH_TO_TEMP_WEB)
+        self.logger.info("{} files in directory, start analysing ...".format(len(files)))
         for file_name in files:
             university_id, faculty_id = file_name.replace(".html", "").split("-")
             soup = self._build_soup(file_name)
@@ -85,6 +86,8 @@ class Analyser:
             self._count_direct_children_recursive(body_tag)
             element = self._get_most_children_element()
             self.parse_html_and_store(element, university_id, faculty_id)
+
+        self.logger.info("parsing process complete.")
 
     def parse_html_and_store(self, element, university_id, faculty_id):
         for item in element.contents:
@@ -107,7 +110,6 @@ class Analyser:
 
                     mongo_object_id = self.dh_handler.insert_professor(name, position, faculty_id, university_id)
 
-                    self.logger.info(mongo_object_id)
                     # TODO: insert back into crawlrequest collection
 
     # --- private ---
