@@ -32,10 +32,10 @@ const crawlrequestSchema = new SimpleSchema({
   },
   status: {
     type: Array,
-    defaultValue: [false, false]
+    defaultValue: [0, 0, 0]
   },
   'status.$': {
-    type: Boolean
+    type: Number
   },
   facultyUrl: {
     type: String

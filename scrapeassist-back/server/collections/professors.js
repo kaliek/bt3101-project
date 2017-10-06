@@ -8,6 +8,16 @@ professors.deny({
   remove: () => true
 })
 
+const relevantDataSchema = new SimpleSchema({
+  url: {
+    type: String
+  },
+  snippet: {
+    type: String
+    optional: true
+  }
+})
+
 const professorSchema = new SimpleSchema({
   universityId: {
     type: String
@@ -42,12 +52,12 @@ const professorSchema = new SimpleSchema({
     type: String,
     optional: true
   },
-  relevantURLs: {
+  relevantData: {
     type: Array,
     defaultValue: []
   },
   'relevantURLs.$': {
-    type: String
+    type: relevantDataSchema
   }
 })
 
