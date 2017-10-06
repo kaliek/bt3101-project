@@ -19,31 +19,10 @@ from urllib import request
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from pymongo import MongoClient
-from common import UnknownStatusException
+from common import *
 from nameparser import HumanName
 import logging
 import os
-from html.parser import HTMLParser
-
-
-class MyHTMLParser(HTMLParser):
-
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.data_list = []
-
-    def handle_starttag(self, tag, attrs):
-        pass
-
-    def handle_endtag(self, tag):
-        pass
-
-    def handle_data(self, data):
-        if data != " ":
-            self.data_list.append(data)
-
-    def get_list(self):
-        return self.data_list
 
 
 class Downloader:
@@ -56,13 +35,14 @@ class Downloader:
 
     def __init__(self):
         self.db_handler = DatabaseHandler()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     # --- public API ---
 
     def run(self):
-        logging.info("retrieving crawl requests from database ...")
+        self.logger.info("retrieving crawl requests from database ...")
         user_requests = self.db_handler.get_crawl_requests()
-        logging.info("{} requests found.".format(user_requests.count()))
+        self.logger.info("{} requests found.".format(user_requests.count()))
 
         for user_request in user_requests:
             try:
@@ -92,6 +72,7 @@ class Analyser:
         self.soup_memory = []
         self.name_dictionary = self._load_name_dictionary()
         self.dh_handler = DatabaseHandler()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     # --- public API ---
 
@@ -124,7 +105,10 @@ class Analyser:
                     name = self._parse_name(clean_token_list)
                     position = self._parse_position(clean_token_list)
 
-                    self.dh_handler.insert_professor(name, position, faculty_id, university_id)
+                    mongo_object_id = self.dh_handler.insert_professor(name, position, faculty_id, university_id)
+
+                    self.logger.info(mongo_object_id)
+                    # TODO: insert back into crawlrequest collection
 
     # --- private ---
 
@@ -358,7 +342,7 @@ class DatabaseHandler:
             raise UnknownStatusException
 
     def insert_professor(self, name, position, faculty_id, university_id):
-        self.db[self.PROFESSOR_COLLECTION].insert(
+        return self.db[self.PROFESSOR_COLLECTION].insert(
             {
                 "rank": position,
                 "name": name,
@@ -366,9 +350,3 @@ class DatabaseHandler:
                 "universityId": university_id
             }
         )
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    # Downloader().run()
-    Analyser().run()
