@@ -14,7 +14,7 @@ class TestDownloader(unittest.TestCase):
         downloader = Downloader()
 
         for item in self.TEST_LIST:
-            downloader._download(*item)
+            downloader._download_page(*item)
 
 
 if __name__ == '__main__':

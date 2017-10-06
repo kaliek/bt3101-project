@@ -58,29 +58,32 @@ class Downloader:
     def __init__(self):
         self.db_handler = DatabaseHandler()
 
-    def _download(self, university_id, faculty_id, url_list):
-        if not os.path.exists(self.PATH_TO_TEMP_WEB):
-            os.makedirs(self.PATH_TO_TEMP_WEB)
-        request.urlretrieve(url_list, filename=self.FORMAT_TEMP_WEB.format(university_id, faculty_id))
+    # --- public API ---
 
-    def process_requests(self):
+    def run(self):
         logging.info("retrieving crawl requests from database ...")
         user_requests = self.db_handler.get_crawl_requests()
         logging.info("{} requests found.".format(user_requests.count()))
 
         for user_request in user_requests:
             try:
-                self._download(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
+                self._download_page(user_request['universityId'], user_request['facultyId'], user_request['facultyUrl'])
                 self.db_handler.update_status("success", user_request['_id'], user_request['status'])
             except ValueError:  # invalid url
                 self.db_handler.update_status("failure", user_request['_id'], user_request['status'])
+
+    # --- private ---
+
+    def _download_page(self, university_id, faculty_id, url_list):
+        if not os.path.exists(self.PATH_TO_TEMP_WEB):
+            os.makedirs(self.PATH_TO_TEMP_WEB)
+        request.urlretrieve(url_list, filename=self.FORMAT_TEMP_WEB.format(university_id, faculty_id))
 
 
 class Analyser:
 
     """
-        given the url of the faculty list
-        output the data in structured format
+        handling the parsing of html
     """
 
     PATH_TO_TEMP_WEB = r'temp'
@@ -88,40 +91,20 @@ class Analyser:
 
     def __init__(self):
         self.soup_memory = []
-        self.name_dictionary = self.load_name_dictionary()
+        self.name_dictionary = self._load_name_dictionary()
 
-    def load_name_dictionary(self):
-        name_list = open("name_dictionary.txt").read().split("\n")
-        name_list = list(map(lambda x: x.split(',')[0], name_list))
-        return name_list
+    # --- public API ---
 
-    def _build_soup(self, file_name):
-        try:
-            file = open(os.path.join(self.PATH_TO_TEMP_WEB, file_name), encoding='utf-8').read()
-        except UnicodeDecodeError:
-            file = open(os.path.join(self.PATH_TO_TEMP_WEB, file_name), encoding='latin-1').read()
-        return BeautifulSoup(file, 'lxml')
+    def run(self):
+        files = os.listdir(self.PATH_TO_TEMP_WEB)
+        for temp_file in files:
+            soup = self._build_soup(temp_file)
+            body_tag = soup.body
+            self._count_direct_children_recursive(body_tag)
+            element = self._get_most_children_element()
+            self.parse_html_and_store(element)
 
-    def find_most_children(self, element):
-        for child in element.contents:
-            if isinstance(child, Tag):
-                count = self._find_number_of_direct_tags(child)
-                self.soup_memory.append((count, child))
-                self.find_most_children(child)
-
-    @staticmethod
-    def _find_number_of_direct_tags(element):
-        counter = 0
-        for child in element.contents:
-            if isinstance(child, Tag):
-                counter += 1
-        return counter
-
-    def get_highest_element(self):
-        self.soup_memory.sort(key=lambda x: x[0], reverse=True)
-        return self.soup_memory[0][1]
-
-    def _parse_element(self, element):
+    def parse_html_and_store(self, element):
         for item in element.contents:
             if isinstance(item, Tag):
                 parser = MyHTMLParser()
@@ -136,26 +119,101 @@ class Analyser:
 
                 logging.info(token_list)
 
-                if self.is_valid_data_row(token_list):
+                if self._is_valid_data_row(token_list):
+                    clean_token_list = self._clean_punctuation(token_list)
 
-                    clean_token_list = self.clean_punctuation(token_list)
-
-                    name = self.parse_name(clean_token_list)
-                    position = self.parse_position(clean_token_list)
+                    name = self._parse_name(clean_token_list)
+                    position = self._parse_position(clean_token_list)
                     logging.info(name + " " + position)
 
-                    break
+    # --- private ---
 
     @staticmethod
-    def parse_name(clean_token_list):
-        # ========= Name =========
-        name_token = clean_token_list[0].strip()  # or 0:1, will add a function to determine that
-        if " " not in name_token:
+    def _load_name_dictionary():
+        """
+        load the name dictionary from text and
+        store as list
+        :return: list
+        """
+        name_list = open("resource/name_dictionary.txt").read().split("\n")
+        name_list = list(map(lambda x: x.split(',')[0], name_list))
+        return name_list
+
+    def _build_soup(self, file_name):
+        """
+        build BeautifulSoup object from file name
+        :param file_name: string
+        :return: BeautifulSoup
+        """
+        try:
+            file = open(os.path.join(self.PATH_TO_TEMP_WEB, file_name), encoding='utf-8').read()
+        except UnicodeDecodeError:
+            file = open(os.path.join(self.PATH_TO_TEMP_WEB, file_name), encoding='latin-1').read()
+        return BeautifulSoup(file, 'lxml')
+
+    def _clear_memory(self):
+        self.soup_memory = []
+
+    # algorithm
+
+    def _count_direct_children_recursive(self, element):
+        """
+        a recursive method to add Tag object into
+        memory list, with a count of direct children
+        :param element: Tag
+        :return: None
+        """
+        for child in element.contents:
+            if isinstance(child, Tag):
+                count = self._get_number_of_direct_tags(child)
+                self.soup_memory.append((count, child))
+                self._count_direct_children_recursive(child)
+
+    @staticmethod
+    def _get_number_of_direct_tags(element):
+        """
+        get the number of direct children that are of
+        type Tag
+        :param element: Tag
+        :return: int
+        """
+        counter = 0
+        for child in element.contents:
+            if isinstance(child, Tag):
+                counter += 1
+        return counter
+
+    def _get_most_children_element(self):
+        """
+        sort the memory list, get the highest instance,
+        clear the memory for another page
+        :return: list
+        """
+        self.soup_memory.sort(key=lambda x: x[0], reverse=True)
+        desired_element = self.soup_memory[0][1]
+        self._clear_memory()  # clear memory for every call
+        return desired_element
+
+    # parsing
+
+    @staticmethod
+    def _parse_name(clean_token_list):
+        """
+        given cleaned token list, parse name from
+        at most first 2 tokens in the list
+        :param clean_token_list: list
+        :return: string
+        """
+        name_token = clean_token_list[0].strip()
+
+        if " " not in name_token:  # after strip, if single word, append second token
             name_token += " " + clean_token_list[1]
+
         name_token = name_token.strip()
         name_parser = HumanName(name_token)
         title = name_parser.title
         name = name_token.replace(title, "").strip()
+
         # post clean
         if "-" in name:
             name = name.split("-")[0].strip()
@@ -163,44 +221,60 @@ class Analyser:
         return name
 
     @staticmethod
-    def parse_position(clean_token_list):
-        # ========= Position ==========
-        # only allow, professor, assoc prof, assist prof and reader
+    def _parse_position(clean_token_list):
+        """
+        given cleaned token list, parse position
+        from the entire list except the first token
+        we ignore the possbility of the second token being the name
+        because it will not likely to consist keywords such as prof
+
+        only allow, professor, assoc prof, assist prof and reader (total 4)
+
+        :param clean_token_list: list
+        :return: string
+        """
         position = ""
         for token_lower in clean_token_list[1:]:
-            if "Professor" in token_lower or "Prof" in token_lower:
+            if "Professor" in token_lower or "Prof" in token_lower:  # maintain Cap to avoid word like `profile`
                 if "Associate" in token_lower or "Assoc" in token_lower:
                     position = "Associate Professor"
-                    break
                 elif "Assistant" in token_lower:
                     position = "Assistant Professor"
-                    break
                 else:
                     position = "Professor"
-                    break
+                break
             else:
                 if "Reader" in token_lower:
                     position = "Reader"
                     break
+
         return position
 
-    def clean_punctuation(self, token_list):
+    def _clean_punctuation(self, token_list):
+        """
+        remove punctuation in the token list
+        :param token_list: list
+        :return: list
+        """
         clean_token_list = []
         for token in token_list:
             if not self.is_punctuation_token(token):
                 clean_token_list.append(token)
         return clean_token_list
 
-    def get_name_token(self, first_token, second_token):
-        if len(first_token) < 2:
-            return first_token + second_token
-        else:
-            if len(second_token) == 1 and second_token in self.name_dictionary:
-                return first_token + second_token
-            else:
-                return first_token
+    # validation
 
-    def is_valid_data_row(self, token_list):
+    def _is_valid_data_row(self, token_list):
+        """
+        validate whether a row is data row
+        it is ok to kill an friendly target, but it is bad to allow false data go through
+
+        1. if the first token of the row consists more than 5 words then probably it is not
+        2. if there are stopping words in first token, common words in the header element
+        3. joined the first 2 token, do name match with name dictionary
+        :param token_list: list
+        :return: boolean
+        """
         first_token = token_list[0]
         first_token_list = first_token.split(" ")
         if len(first_token_list) > 5:
@@ -209,13 +283,19 @@ class Analyser:
         if self._is_in_stop_words(first_token):
             return False
 
-        first_token = " ".join(token_list[:2]).split(" ")
-        for item in first_token:
+        joined_token = " ".join(token_list[:2]).split(" ")
+        for item in joined_token:
             if item in self.name_dictionary:
                 return True
+
         return False
 
     def _is_in_stop_words(self, token):
+        """
+        whether the token contains any of the stop words
+        :param token: string
+        :return: boolean
+        """
         for stopwords in self.STOP_WORDS:
             if stopwords in token.lower():
                 return True
@@ -223,22 +303,15 @@ class Analyser:
 
     @staticmethod
     def is_punctuation_token(token):
+        """
+        whether a token is only a punctuation
+        :param token: string
+        :return: boolean
+        """
+        token = token.strip()
         if len(token) <= 2:
             return not token.isalpha()
         return False
-
-    def _clear_memory(self):
-        self.soup_memory = []
-
-    def analyse_web(self):
-        files = os.listdir(self.PATH_TO_TEMP_WEB)
-        for temp_file in files:
-            soup = self._build_soup(temp_file)
-            body_tag = soup.body
-            self.find_most_children(body_tag)
-            element = self.get_highest_element()
-            self._clear_memory()
-            self._parse_element(element)
 
 
 class DatabaseHandler:
@@ -286,5 +359,5 @@ class DatabaseHandler:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    Downloader().process_requests()
-    # Analyser().analyse_web()
+    # Downloader().run()
+    Analyser().run()
