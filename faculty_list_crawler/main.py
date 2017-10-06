@@ -1,20 +1,3 @@
-"""
-    University College London: http://www.geog.ucl.ac.uk/people/academic-staff
-
-    University of Colorado – Boulder: http://www.colorado.edu/geography/ppl4/faculty
-
-    University of Manchester: http://www.seed.manchester.ac.uk/geography/about/people/
-
-    University of Toronto (St George): http://geography.utoronto.ca/people/faculty/full-time-faculty/
-
-    Queen Mary London: http://www.geog.qmul.ac.uk/staff/academicstaff/
-
-    University of Cambridge: https://www.geog.cam.ac.uk/people/
-
-    University of British Columbia: http://www.geog.ubc.ca/people/
-
-    University of Oxford: http://www.geog.ox.ac.uk/staff/
-"""
 from urllib import request
 from bs4 import BeautifulSoup
 from bs4.element import Tag
