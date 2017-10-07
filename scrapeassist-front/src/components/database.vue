@@ -176,9 +176,9 @@ export default {
     professors: function () {
       var cmpFn = function (key) {
         return function (a, b) {
-          if (a[key] > b[key]) {
+          if (a[key] > b[key] || !a[key]) {
             return 1
-          } else if (a[key] < b[key]) {
+          } else if (a[key] < b[key] || !b[key]) {
             return -1
           }
           return 0
