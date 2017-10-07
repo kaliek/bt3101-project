@@ -1,7 +1,7 @@
 from urllib import request
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from common import *
 from nameparser import HumanName
 import logging
@@ -73,6 +73,7 @@ class Analyser:
         self.logger.info("parsing process complete.")
 
     def parse_html_and_store(self, element, university_id, faculty_id):
+        professor_id_list = []
         for item in element.contents:
             if isinstance(item, Tag):
                 parser = MyHTMLParser()
@@ -91,9 +92,13 @@ class Analyser:
                     name = self._parse_name(clean_token_list)
                     position = self._parse_position(clean_token_list)
 
-                    mongo_object_id = self.dh_handler.insert_professor(name, position, faculty_id, university_id)
+                    try:
+                        mongo_object_id = self.dh_handler.insert_professor(name, position, faculty_id, university_id)
+                        professor_id_list.append(mongo_object_id)
+                    except errors.DuplicateKeyError:
+                        pass
 
-                    # TODO: insert back into crawlrequest collection
+        self.dh_handler.update_professor_id(university_id, faculty_id, professor_id_list)
 
     # --- private ---
 
@@ -327,11 +332,26 @@ class DatabaseHandler:
             raise UnknownStatusException
 
     def insert_professor(self, name, position, faculty_id, university_id):
-        return self.db[self.PROFESSOR_COLLECTION].insert(
+        object_id = self.db[self.PROFESSOR_COLLECTION].insert(
             {
                 "rank": position,
                 "name": name,
                 "facultyId": faculty_id,
                 "universityId": university_id
+            }
+        )
+        return object_id
+
+    def update_professor_id(self, university_id, faculty_id, id_list):
+        print(id_list)
+        self.db[self.CRAWL_REQUEST_COLLECTION].update(
+            {
+                "universityId": university_id,
+                "facultyId": faculty_id
+            },
+            {
+                "$set": {
+                    "professorIds": id_list
+                }
             }
         )
