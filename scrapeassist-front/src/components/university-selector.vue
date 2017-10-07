@@ -1,6 +1,6 @@
 <template>
   <div id="u-select">
-    <select name="university" multiple="" class="ui fluid dropdown" id="university-select">
+    <select name="university" multiple="" class="ui fluid search dropdown" id="university-select">
       <option value=""><i class="university icon"></i>University</option>
       <option v-for="(u,idx) in universities" v-bind:value="idx">{{u.name}}</option>
     </select>
@@ -16,6 +16,10 @@ export default {
       default: function () {
         return []
       }
+    },
+    additions: {
+      type: Boolean,
+      default: false
     }
   },
   mounted: function () {
@@ -23,7 +27,8 @@ export default {
     $(this.$el).find('#university-select').dropdown({
       onChange: function (v) {
         self.$parent.$emit('selectUniversity', v)
-      }
+      },
+      allowAdditions: self.additions
     })
     $(this.$el).find('#university-select').dropdown('set exactly', this.uIds)
   },

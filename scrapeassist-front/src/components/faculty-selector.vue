@@ -1,7 +1,7 @@
 <template>
   <div id="f-select">
-    <select name="faculty" class="ui fluid dropdown" id="faculty-select">
-      <option value=""><i class="building icon"></i>Faculty</option>
+    <select name="faculty" class="ui fluid search dropdown" id="faculty-select">
+      <option value="">Faculty</option>
       <option v-for="(f,idx) in faculties" v-bind:value="idx">{{f.name}}</option>
     </select>
   </div>
@@ -14,6 +14,10 @@ export default {
     fId: {
       type: String,
       default: ''
+    },
+    additions: {
+      type: Boolean,
+      default: false
     }
   },
   mounted: function () {
@@ -21,7 +25,8 @@ export default {
     $(this.$el).find('#faculty-select').dropdown({
       onChange: function (v) {
         self.$parent.$emit('selectFaculty', v)
-      }
+      },
+      allowAdditions: self.additions
     })
     $(this.$el).find('#faculty-select').dropdown('set selected', this.fId)
   },

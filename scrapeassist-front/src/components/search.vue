@@ -3,7 +3,7 @@
     <div class="ui middle aligned center aligned grid">
       <div class="column">
         <h2 class="ui icon header">
-          <i class="search icon"></i>
+          <i class="university icon"></i>
           <div class="content">
             Choose a University and Faculty
             <!-- <div class="sub header">Manage your account settings and set e-mail preferences.</div> -->
@@ -11,16 +11,10 @@
         </h2>
         <div class="ui large form">
           <div class="field">
-            <uSelect></uSelect>
-            <button class="circular ui icon button" data-content="Add a new University">
-              <i class="icon plus"></i>
-            </button>
+            <uSelect :additions="true"></uSelect>
           </div>
           <div class="field">
-            <fSelect></fSelect>
-            <button class="circular ui icon button" data-content="Add a new Faculty">
-              <i class="icon plus"></i>
-            </button>
+            <fSelect :additions="true"></fSelect>
           </div>
           <div class="ui buttons">
             <button class="ui black button" v-on:click="search">Search the Database</button>
@@ -45,7 +39,13 @@ export default {
   },
   mounted: function () {
     $(this.$el).find('.circular.button').popup({
-      position: 'right center'
+      on: 'click',
+      position: 'right center',
+      html: `<div class="ui action input">
+              <input placeholder="University Name" type="text">
+              <button @click="createUniversity" class="ui button">Create</button>
+            </div>
+            `
     })
     this.$on('selectUniversity', function (v) {
       this.uIds = v
@@ -57,11 +57,19 @@ export default {
   data: function () {
     return {
       uIds: [],
-      fId: ''
+      fId: '',
+      newUniversities: []
     }
   },
   methods: {
     search: function () {
+      if (!(0 in this.uIds && this.fId)) {
+        return this.$store.commit('showMessageModal', {
+          title: 'Blank Fields',
+          msg: 'Please fill in all fields for the search query.',
+          icon: 'exclamation triangle'
+        })
+      }
       this.$store.dispatch('searchProfessors', {
         uIds: this.uIds,
         fId: this.fId,

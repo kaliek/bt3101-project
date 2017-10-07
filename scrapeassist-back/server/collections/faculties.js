@@ -21,3 +21,9 @@ Meteor.publish({
     return faculties.find({})
   }
 })
+
+Meteor.methods({
+  createFaculty: function(name) {
+    return faculties.insert({name: name})
+  }
+})

@@ -18,8 +18,8 @@ const Asteroid = createClass()
 const store = new Vuex.Store({
   state: {
     conn: new Asteroid({
-      endpoint: 'ws://115.66.242.122:3100/websocket'
-      // endpoint: 'ws://localhost:3000/websocket'
+      // endpoint: 'ws://115.66.242.122:3100/websocket'
+      endpoint: 'ws://localhost:3000/websocket'
     }),
     msgModalProps: {
       title: '',

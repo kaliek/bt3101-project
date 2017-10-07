@@ -11,13 +11,6 @@ universities.deny({
 const universitySchema = new SimpleSchema({
   name: {
     type: String
-  },
-  facultyIds: {
-    type: Array,
-    defaultValue: []
-  },
-  'facultyIds.$': {
-    type: String
   }
 })
 
@@ -26,5 +19,15 @@ universities.attachSchema(universitySchema)
 Meteor.publish({
   allUniversities: function () {
     return universities.find({})
+  }
+})
+
+Meteor.methods({
+  createUniversities: function(names) {
+    var Ids = []
+    for (var i in names) {
+      Ids.push(universities.insert({name: names[i]}))
+    }
+    return Ids
   }
 })

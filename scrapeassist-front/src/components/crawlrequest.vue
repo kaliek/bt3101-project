@@ -6,7 +6,7 @@
           <i class="cloud upload icon"></i>
           <div class="content">
             Create Crawl Request
-            <div class="sub header">for {{$store.state.faculties[$store.state.crfId].name}}</div>
+            <div class="sub header">for Faculty of {{$store.state.crfId in $store.state.faculties ? $store.state.faculties[$store.state.crfId].name : $store.state.crfId}}</div>
             <h4 class="ui header">
               We need faculty list URLs for each University to start the crawl
             </h4>
@@ -14,7 +14,7 @@
         </h2>
         <div class="ui large form">
           <template v-for="(i,idx) in $store.state.cruIds">
-            <h5>{{$store.state.universities[i].name}}</h5>
+            <h5>{{i in $store.state.universities ? $store.state.universities[i].name : i}}</h5>
             <div class="field">
               <div class="ui left icon input">
                 <i class="linkify icon"></i>

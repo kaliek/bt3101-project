@@ -1,12 +1,17 @@
 <template>
   <div id="app">
     <router-view></router-view>
+    <msgmodal v-bind="$store.state.msgModalProps"></msgmodal>
   </div>
 </template>
 
 <script>
+import msgmodal from '@/components/message-modal'
 export default {
-  name: 'app'
+  name: 'app',
+  components: {
+    msgmodal: msgmodal
+  }
 }
 </script>
 

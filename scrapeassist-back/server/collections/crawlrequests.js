@@ -65,6 +65,14 @@ Meteor.methods({
     if (fUrls.length !== uIds.length) {
       throw new Meteor.Error('Faculty URLs', 'All Faculty URLs must be filled')
     }
+    for (var i=0; i<uIds.length; i++) {
+      if (universities.findOne({_id: uIds[i]}) === undefined) {
+        uIds[i] = universities.insert({name: uIds[i]})
+      }
+    }
+    if (faculties.findOne({_id: fId}) === undefined) {
+      fId = faculties.insert({name: fId})
+    }
     for (i in fUrls) {
       crawlrequests.insert({facultyUrl: fUrls[i], universityId: uIds[i], facultyId: fId})
     }

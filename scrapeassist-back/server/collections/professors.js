@@ -13,7 +13,7 @@ const relevantDataSchema = new SimpleSchema({
     type: String
   },
   snippet: {
-    type: String
+    type: String,
     optional: true
   }
 })
@@ -91,19 +91,18 @@ if (!professors.find({}).count()) {
       professors.insert(data)
     }).run()
   })
-  // setTimeout(function () {
-  //   Fiber(function () {
-  //     var p = professors.find({}).fetch()
-  //     for (var i in p) {
-  //       console.log(p[i].facultyId)
-  //       universities.update({_id: p[i].universityId}, {$addToSet: {facultyIds: p[i].facultyId}})
-  //     }
-  //   }).run()
-  // }, 5000)
 }
 
 Meteor.methods({
   searchProfessors: function (uIds, fId) {
+    uIds.forEach( function (e) {
+      if (universities.findOne({_id: e}) === undefined) {
+        universities.insert({name: e})
+      }
+    })
+    if (faculties.findOne({_id: fId}) === undefined) {
+      faculties.insert({name: fId})
+    }
     return professors.find({universityId: {$in: uIds}, facultyId: fId}).fetch()
   }
 })
