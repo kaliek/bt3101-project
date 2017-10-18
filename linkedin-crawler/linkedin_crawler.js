@@ -4,17 +4,21 @@ const config = require('./config.json')
 const browser = new HeadlessChrome({
     headless: false // set to true for production; to false to view actual browser action
 })
-function getInfo(name, uni) {
+function getInfo(name, uni, professor_id, request_id, original_status) {
     var result = {
         name: name,
         currPos: null,
         uni: uni,
         promYear: null,
-        sch: [],
-        gradYear: [],
-        phdField: []
+        sch: null,
+        gradYear: null,
+        phdField: null,
+        success: false,
+        profId: professor_id,
+        requestId: request_id,
+        originalStatus: original_status
     }
-
+    console.log(result.value)
     try {
         const expHtml = document.querySelector('.pv-profile-section.experience-section')
         var unis = document.querySelectorAll('.pv-entity__secondary-title')
@@ -33,11 +37,12 @@ function getInfo(name, uni) {
         for (var i = 0; i < phds.length; i++) {
             var d = phds[i].innerText
             if (d == 'PhD') {
-                result['sch'].push(eduHtml.querySelectorAll('.pv-entity__school-name')[i].innerText)
-                result['gradYear'].push(eduHtml.querySelectorAll('.pv-entity__dates span:not(.visually-hidden) time')[i + 1].innerText)
-                result['phdField'].push(eduHtml.querySelectorAll('.pv-entity__fos .pv-entity__comma-item')[i].innerText)
+                result['sch'] = eduHtml.querySelectorAll('.pv-entity__school-name')[i].innerText
+                result['gradYear'] = eduHtml.querySelectorAll('.pv-entity__dates span:not(.visually-hidden) time')[i + 1].innerText
+                result['phdField'] = eduHtml.querySelectorAll('.pv-entity__fos .pv-entity__comma-item')[i].innerText
             }
         }
+        result['success'] = true
         return result
     } catch (err) {
         result['error'] = 'Exception in querySelector ' + err
@@ -68,7 +73,7 @@ async function search(item) {
         await tab.click('.search-result__wrapper a')
         await tab.wait(2000)
 
-        const info = await tab.evaluate(getInfo, item[0], item[1])
+        const info = await tab.evaluate(getInfo, item[0], item[1], item[2], item[3], item[4])
         // await console.log(info["result"])
         if (info.result.value.error) {
             throw info.error
@@ -86,6 +91,36 @@ async function search(item) {
 
 async function crawl(item) {
     await authenticate()
-    await search(item)
+    var a = await search(item)
+    await browser.close()
+    return a
 }
-var output = crawl(['Ben Leong', 'National University of Singapore'])
+
+var fs = require('fs');
+var parse = require('csv-parse');
+
+var inputFile = 'crawler_inputs.csv';
+console.log("Processing input file");
+var csvWriter = require('csv-write-stream')
+var writer = csvWriter()
+writer.pipe(fs.createWriteStream('crawler_outputs.csv'))
+
+var parser = parse({ delimiter: ',' }, async function (err, data) {
+    data.forEach(async function (line) {
+        var prof = {
+            "professor_name": line[0]
+            , "university_name": line[1]
+            , "professor_id": line[2]
+            , "request_id": line[3]
+            , "original_status": line[4]
+        };
+        var output = await crawl([prof["professor_name"], prof["university_name"], prof["professor_id"], prof["request_id"], prof["original_status"]])
+        if (output.value.success) {
+            writer.write(output.value)
+        }
+    })
+})
+
+// read the inputFile, feed the contents to the parser
+fs.createReadStream(inputFile).pipe(parser)
+
