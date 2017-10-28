@@ -1,5 +1,8 @@
 import csv
+from database_handler import *
 # read the output file produced by orcid_crawler.js to database
+
+db_handler = DatabaseHandler()
 with open("crawler_outputs.csv", "r") as f:
     outputs = csv.reader(f, delimiter=',')
     next(outputs)
