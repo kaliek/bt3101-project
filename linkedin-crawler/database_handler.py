@@ -13,12 +13,13 @@ class DatabaseHandler:
 
     def get_crawl_requests(self):
         return self.db[self.CRAWL_REQUEST_COLLECTION].find(
-            {"status": [1, 0, 0]}
-        )
+            {$or: [ {"status": [1, 2, 0, 0]}, 
+                 {"status": [1, 1, 0, 0]}
+            ]})
 
     def update_status(self, status, request_id, original_status):
         if status == 'success':
-            original_status[1] = 1
+            original_status[2] = 1
             self.db[self.CRAWL_REQUEST_COLLECTION].update(
                 {"_id": request_id},
                 {
@@ -26,7 +27,7 @@ class DatabaseHandler:
                 }
             )
         elif status == 'failure':
-            original_status[1] = 2
+            original_status[2] = 2
             self.db[self.CRAWL_REQUEST_COLLECTION].update(
                 {"_id": request_id},
                 {
