@@ -13,7 +13,7 @@ class DatabaseHandler:
 
     def get_crawl_requests(self):
         return self.db[self.CRAWL_REQUEST_COLLECTION].find(
-            {$or: [ {"status": [1, 2, 0, 0]}, 
+            {"$or": [ {"status": [1, 2, 0, 0]}, 
                  {"status": [1, 1, 0, 0]}
             ]})
 
