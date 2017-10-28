@@ -1,0 +1,22 @@
+{
+  "name": "linkedin-crawler",
+  "version": "0.0.1",
+  "description": "",
+  "main": "crawl.js",
+  "dependencies": {
+    "chrome-remote-interface": "^0.25.0",
+    "csv": "^1.1.1",
+    "csv-parse": "^1.2.4",
+    "csv-write-stream": "^2.0.0",
+    "fast-csv": "^2.4.1",
+    "lighthouse": "^2.4.0",
+    "mongodb": "^2.2.31",
+    "simple-headless-chrome": "^4.3.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kazekara",
+  "license": "ISC"
+}
