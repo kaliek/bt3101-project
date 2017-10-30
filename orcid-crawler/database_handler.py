@@ -13,7 +13,7 @@ class DatabaseHandler:
 
     def get_crawl_requests(self):
         return self.db[self.CRAWL_REQUEST_COLLECTION].find(
-            {"status": [1, 0, 0, 0]}
+            {"status": [1, 0, 0]}
         )
 
     def update_status(self, status, request_id, original_status):
